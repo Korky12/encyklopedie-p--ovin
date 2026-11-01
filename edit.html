@@ -82,6 +82,8 @@
       <h1 id="edit-page-title" class="firstHeading">Editace článku</h1>
       <p class="siteSub">Ujistěte se, že záznam obsahuje skutečné perly a odpovídá historické pravdě.</p>
 
+      <div id="auth-warning-notice" class="wiki-notice" style="display: none; background-color: #fff9e6; border-color: #fae69e;"></div>
+
       <form id="article-edit-form" style="margin-top: 1.5rem;">
         <!-- Název a typ -->
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
@@ -370,6 +372,12 @@
     const currentUser = await getCurrentUser();
     if (currentUser) {
       editorNameInput.value = currentUser.displayName;
+    } else {
+      const authNotice = document.getElementById('auth-warning-notice');
+      authNotice.innerHTML = `
+        <span><strong>Upozornění:</strong> V tomto prohlížeči nejste přihlášeni. Abyste mohli článek uložit do online databáze, <a href="login.html" style="font-weight: bold; text-decoration: underline;">přihlaste se prosím zde</a> (nebo v demo režimu zvolte roli v horní liště).</span>
+      `;
+      authNotice.style.display = 'block';
     }
 
     // Načíst existující kategorie do checkboxů
@@ -523,16 +531,6 @@
         infobox: infobox,
         infobox_data: infobox
       };
-        id: existingArticle ? existingArticle.id : undefined,
-        slug: existingArticle ? existingArticle.slug : slugify(title),
-        title,
-        summary: summaryInput.value.trim(),
-        content,
-        article_type: typeSelect.value,
-        incident_date: dateInput.value ? new Date(dateInput.value).toISOString() : null,
-        incident_location: locationInput.value.trim(),
-        categories: selectedCategories
-      };
 
       const btnSave = document.getElementById('btn-save-article');
       const statusMsg = document.getElementById('save-status-msg');
@@ -550,8 +548,12 @@
         }, 600);
       } catch (err) {
         btnSave.disabled = false;
-        statusMsg.textContent = 'Chyba: ' + err.message;
-        statusMsg.style.color = 'red';
+        statusMsg.style.color = '#ba0000';
+        if (err.message && err.message.includes('přihlášeni')) {
+          statusMsg.innerHTML = `Chyba: Pro uložení musíte být přihlášeni. <a href="login.html" style="font-weight: bold; text-decoration: underline;">Klikněte zde pro přihlášení</a>.`;
+        } else {
+          statusMsg.textContent = 'Chyba: ' + err.message;
+        }
       }
     });
   </script>

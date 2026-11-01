@@ -430,20 +430,80 @@ export async function saveArticle(articleData, editSummary = 'Úprava článku',
     };
 
     let result = null;
-    const { data, error } = await supabase.rpc('save_article_revision', payload);
-    if (error) {
-      // Pokud existující RPC funkce v Supabase ještě nemá parametr p_infobox_data, zkusíme bez něj
-      delete payload.p_infobox_data;
-      const { data: retryData, error: retryErr } = await supabase.rpc('save_article_revision', payload);
-      if (retryErr) throw retryErr;
-      result = retryData;
-      // A infobox_data uložíme přímo do řádku článku
-      if (result && result.id) {
-        await supabase.from('articles').update({ infobox_data: infoboxData }).eq('id', result.id);
+    try {
+      const { data, error } = await supabase.rpc('save_article_revision', payload);
+      if (!error && data) {
+        result = data;
+      } else {
+        // Zkusíme zavolat bez p_infobox_data pro případ starší verze RPC funkce
+        delete payload.p_infobox_data;
+        const { data: retryData, error: retryErr } = await supabase.rpc('save_article_revision', payload);
+        if (!retryErr && retryData) {
+          result = retryData;
+          if (result && result.id) {
+            await supabase.from('articles').update({ infobox_data: infoboxData }).eq('id', result.id);
+          }
+        } else {
+          throw error || retryErr;
+        }
       }
-    } else {
-      result = data;
+    } catch (rpcErr) {
+      console.warn('[Supabase] RPC save_article_revision selhalo, provádím přímý upsert do tabulky:', rpcErr);
+
+      // Přímý fallback: upsert do tabulky articles
+      const articleRow = {
+        slug: slug,
+        title: articleData.title,
+        summary: articleData.summary || '',
+        content: articleData.content || '',
+        article_type: articleData.article_type || 'general',
+        incident_date: articleData.incident_date || null,
+        incident_location: articleData.incident_location || '',
+        infobox_data: infoboxData,
+        status: 'published',
+        updated_at: new Date().toISOString(),
+        updated_by: user.id
+      };
+
+      if (articleData.id) {
+        articleRow.id = articleData.id;
+      } else {
+        articleRow.created_by = user.id;
+      }
+
+      const { data: upsertData, error: upsertErr } = await supabase
+        .from('articles')
+        .upsert(articleRow, { onConflict: 'slug' })
+        .select()
+        .single();
+
+      if (upsertErr) throw upsertErr;
+      result = upsertData;
+
+      // Záznam revize
+      if (result && result.id) {
+        const { data: revList } = await supabase
+          .from('article_revisions')
+          .select('revision_number')
+          .eq('article_id', result.id)
+          .order('revision_number', { ascending: false })
+          .limit(1);
+
+        const nextNum = (revList && revList.length > 0 ? revList[0].revision_number : 0) + 1;
+        await supabase.from('article_revisions').insert({
+          article_id: result.id,
+          revision_number: nextNum,
+          title: articleData.title,
+          summary: articleData.summary || '',
+          content: articleData.content || '',
+          article_type: articleData.article_type || 'general',
+          incident_date: articleData.incident_date || null,
+          editor_id: user.id,
+          edit_summary: editSummary
+        });
+      }
     }
+
     return result;
   }
 
