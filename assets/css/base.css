@@ -65,6 +65,14 @@ a:visited {
   color: var(--wiki-link-visited);
 }
 
+/* Tlačítka a prvky s vlastním pozadím – visited nemění barvu textu */
+.btn-primary:visited,
+.btn-danger:visited,
+.skip-to-content:visited,
+.vector-tab-link.active:visited {
+  color: inherit;
+}
+
 /* Červený odkaz – dosud neexistující článek ve stylu Wiki */
 .wiki-link-new,
 a.wiki-link-new,
