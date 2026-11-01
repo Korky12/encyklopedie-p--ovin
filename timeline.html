@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Časová osa incidentů – Encyklopedie píčovin">
+  <title>Časová osa incidentů – Encyklopedie píčovin</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+  <a href="#content" class="skip-to-content">Přejít k hlavnímu obsahu</a>
+
+  <!-- Header -->
+  <header class="wiki-header" role="banner">
+    <div class="header-left">
+      <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle" aria-label="Přepnout navigaci" aria-expanded="false">☰</button>
+      <a href="index.html" class="site-logo">
+        <img src="assets/images/logo.svg" alt="Logo" class="site-logo-icon">
+        <div class="site-title-group">
+          <span class="site-title">Encyklopedie píčovin</span>
+          <span class="site-subtitle">Časová osa</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-search">
+      <form class="search-form" id="searchform" role="search">
+        <div class="search-input-wrapper">
+          <input type="search" name="search" placeholder="Hledat..." class="search-input" id="searchInput" autocomplete="off">
+          <div class="search-suggestions hidden" id="searchSuggestions"></div>
+        </div>
+        <button type="submit" class="search-button">Hledat</button>
+      </form>
+    </div>
+
+    <div class="header-right">
+      <nav id="user-tools-container" aria-label="Uživatelské nástroje"></nav>
+    </div>
+  </header>
+
+  <div class="mw-body-wrapper">
+    <!-- Sidebar -->
+    <aside id="mw-panel" role="navigation" aria-label="Portály encyklopedie">
+      <div class="portal-box">
+        <h3 class="portal-heading">Navigace</h3>
+        <ul class="portal-list">
+          <li><a href="index.html">Hlavní strana</a></li>
+          <li><a href="#" class="nav-random-article">Náhodný článek</a></li>
+          <li><a href="category.html">Všechny kategorie</a></li>
+          <li><a href="timeline.html"><strong>Časová osa incidentů</strong></a></li>
+        </ul>
+      </div>
+
+      <div class="portal-box">
+        <h3 class="portal-heading">Filtrovat roky</h3>
+        <ul class="portal-list" id="timeline-years-filter">
+          <li><a href="#" data-year="all">Všechny roky</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main id="content" class="mw-body" role="main">
+      <h1 class="firstHeading">Časová osa zdokumentovaných incidentů</h1>
+      <p class="siteSub">Chronologický přehled událostí řazený od nejnovějších po nejstarší.</p>
+
+      <div class="wiki-notice">
+        <span>Zde jsou uvedeny události a incidenty s datem konání. Chybí zde událost? <a href="edit.html">+ Přidejte záznam do kroniky</a>.</span>
+      </div>
+
+      <div class="timeline" id="timeline-container">
+        <!-- Generováno dynamicky -->
+      </div>
+
+      <footer id="footer" role="contentinfo">
+        <ul class="footer-info-list">
+          <li><a href="index.html">Hlavní strana</a> | <a href="category.html">Kategorie</a></li>
+        </ul>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initCommonUI } from './assets/js/ui.js';
+    import { getArticles, formatDate, formatDateTime, escapeHtml } from './assets/js/articles.js';
+
+    await initCommonUI();
+
+    const articles = await getArticles();
+    // Filtrovat pouze incidenty s platným datem
+    const datedIncidents = articles
+      .filter(a => a.incident_date)
+      .sort((a, b) => new Date(b.incident_date) - new Date(a.incident_date));
+
+    const container = document.getElementById('timeline-container');
+    const yearsFilter = document.getElementById('timeline-years-filter');
+
+    if (datedIncidents.length === 0) {
+      container.innerHTML = '<p><em>Zatím nebyly zaznamenány žádné incidenty s konkrétním datem.</em></p>';
+    } else {
+      // Extrahovat unikátní roky
+      const years = [...new Set(datedIncidents.map(a => new Date(a.incident_date).getFullYear()))].sort((a, b) => b - a);
+      yearsFilter.innerHTML = `<li><a href="#" class="year-filter-btn active" data-year="all"><strong>Všechny roky</strong></a></li>` +
+        years.map(y => `<li><a href="#" class="year-filter-btn" data-year="${y}">${y}</a></li>`).join('');
+
+      renderTimeline(datedIncidents);
+
+      // Obsluha filtrování podle roku
+      document.querySelectorAll('.year-filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          document.querySelectorAll('.year-filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          const year = btn.getAttribute('data-year');
+          if (year === 'all') {
+            renderTimeline(datedIncidents);
+          } else {
+            const filtered = datedIncidents.filter(a => new Date(a.incident_date).getFullYear() === parseInt(year, 10));
+            renderTimeline(filtered);
+          }
+        });
+      });
+    }
+
+    function renderTimeline(items) {
+      if (items.length === 0) {
+        container.innerHTML = '<p><em>Pro tento rok není zaznamenán žádný incident.</em></p>';
+        return;
+      }
+
+      container.innerHTML = items.map(item => `
+        <article class="timeline-item">
+          <div class="timeline-marker"></div>
+          <div class="timeline-date">
+            ${formatDate(item.incident_date)}
+            ${item.incident_location ? `• ${escapeHtml(item.incident_location)}` : ''}
+          </div>
+          <h2 class="timeline-title" style="border: none; margin: 0 0 0.35rem 0;">
+            <a href="article.html?slug=${encodeURIComponent(item.slug)}">${escapeHtml(item.title)}</a>
+          </h2>
+          <p style="margin: 0 0 0.5rem 0; font-size: 0.95rem;">
+            ${escapeHtml(item.summary || '')}
+          </p>
+          <a href="article.html?slug=${encodeURIComponent(item.slug)}" class="btn" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+            Přečíst celý záznam →
+          </a>
+        </article>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

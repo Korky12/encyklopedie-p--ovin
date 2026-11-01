@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Historie revizí článku – Encyklopedie píčovin">
+  <title>Historie revizí – Encyklopedie píčovin</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+  <a href="#content" class="skip-to-content">Přejít k hlavnímu obsahu</a>
+
+  <!-- Header -->
+  <header class="wiki-header" role="banner">
+    <div class="header-left">
+      <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle" aria-label="Přepnout navigaci" aria-expanded="false">☰</button>
+      <a href="index.html" class="site-logo">
+        <img src="assets/images/logo.svg" alt="Logo" class="site-logo-icon">
+        <div class="site-title-group">
+          <span class="site-title">Encyklopedie píčovin</span>
+          <span class="site-subtitle">Historie revizí</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-search">
+      <form class="search-form" id="searchform" role="search">
+        <div class="search-input-wrapper">
+          <input type="search" name="search" placeholder="Hledat..." class="search-input" id="searchInput" autocomplete="off">
+          <div class="search-suggestions hidden" id="searchSuggestions"></div>
+        </div>
+        <button type="submit" class="search-button">Hledat</button>
+      </form>
+    </div>
+
+    <div class="header-right">
+      <nav id="user-tools-container" aria-label="Uživatelské nástroje"></nav>
+    </div>
+  </header>
+
+  <div class="mw-body-wrapper">
+    <!-- Sidebar -->
+    <aside id="mw-panel" role="navigation" aria-label="Portály encyklopedie">
+      <div class="portal-box">
+        <h3 class="portal-heading">Navigace</h3>
+        <ul class="portal-list">
+          <li><a href="index.html">Hlavní strana</a></li>
+          <li><a href="#" class="nav-random-article">Náhodný článek</a></li>
+          <li><a href="category.html">Všechny kategorie</a></li>
+          <li><a href="timeline.html">Časová osa</a></li>
+        </ul>
+      </div>
+
+      <div class="portal-box">
+        <h3 class="portal-heading">Akce</h3>
+        <ul class="portal-list">
+          <li><a href="#" id="history-back-to-article">← Zpět na článek</a></li>
+          <li><a href="#" id="history-edit-article">Editovat tento článek</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main id="content" class="mw-body" role="main">
+      <div class="vector-tabs-wrapper">
+        <ul class="vector-tabs">
+          <li><a href="#" class="vector-tab-link" id="tab-article-link">Článek</a></li>
+        </ul>
+        <ul class="vector-tabs">
+          <li><a href="#" class="vector-tab-link" id="tab-read-link">Číst</a></li>
+          <li><a href="#" class="vector-tab-link" id="tab-edit-link">Editovat</a></li>
+          <li><a href="#" class="vector-tab-link active">Zobrazit historii</a></li>
+        </ul>
+      </div>
+
+      <h1 class="firstHeading">Historie verzí: <span id="article-title-target">Načítání...</span></h1>
+      <p class="siteSub">Rozdíly mezi verzemi a možnost vrátit se k dřívějšímu zápisu.</p>
+
+      <div class="wiki-notice">
+        <span>Zde je uveden chronologický přehled úprav tohoto hesla. Kteroukoliv starší verzi můžete obnovit.</span>
+      </div>
+
+      <div id="revisions-container">
+        <ul class="history-list" id="revisions-list">
+          <li><em>Načítám revize...</em></li>
+        </ul>
+      </div>
+
+      <!-- Náhled vybrané revize -->
+      <div id="revision-preview-box" class="mp-box" style="display: none; margin-top: 2rem;">
+        <div class="mp-box-header">
+          <span id="preview-header-text">Náhled vybrané verze</span>
+          <button type="button" class="btn" id="btn-close-preview" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Zavřít náhled</button>
+        </div>
+        <div class="mp-box-body" id="preview-body-content"></div>
+      </div>
+
+      <footer id="footer" role="contentinfo">
+        <ul class="footer-info-list">
+          <li>Historie revizí je ukládána do databáze a nelze ji zpětně smazat.</li>
+        </ul>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initCommonUI } from './assets/js/ui.js';
+    import {
+      getArticleBySlug,
+      getRevisions,
+      restoreRevision,
+      renderWikiMarkdown,
+      formatDateTime,
+      escapeHtml
+    } from './assets/js/articles.js';
+
+    await initCommonUI();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const slug = urlParams.get('slug') || 'incident-s-balkonovym-grilem-2023';
+
+    document.getElementById('tab-article-link').href = `article.html?slug=${encodeURIComponent(slug)}`;
+    document.getElementById('tab-read-link').href = `article.html?slug=${encodeURIComponent(slug)}`;
+    document.getElementById('tab-edit-link').href = `edit.html?slug=${encodeURIComponent(slug)}`;
+    document.getElementById('history-back-to-article').href = `article.html?slug=${encodeURIComponent(slug)}`;
+    document.getElementById('history-edit-article').href = `edit.html?slug=${encodeURIComponent(slug)}`;
+
+    const article = await getArticleBySlug(slug);
+
+    if (!article) {
+      document.getElementById('article-title-target').textContent = 'Článek nenalezen';
+      document.getElementById('revisions-list').innerHTML = '<li>Článek nebyl nalezen.</li>';
+    } else {
+      document.title = `Historie: ${article.title} – Encyklopedie píčovin`;
+      document.getElementById('article-title-target').textContent = article.title;
+
+      await loadHistory(article.id);
+    }
+
+    async function loadHistory(articleId) {
+      const revisions = await getRevisions(articleId);
+      const listEl = document.getElementById('revisions-list');
+
+      if (revisions.length === 0) {
+        listEl.innerHTML = '<li>Žádné zaznamenané revize.</li>';
+        return;
+      }
+
+      listEl.innerHTML = revisions.map((rev, index) => {
+        const isCurrent = index === 0;
+        return `
+          <li class="history-item">
+            <div class="history-meta">
+              <span class="rev-badge">verze #${rev.revision_number}</span>
+              <strong>${formatDateTime(rev.created_at)}</strong>
+              <span>editor: <strong>${escapeHtml(rev.editor_name || rev.profiles?.display_name || 'Kuba')}</strong></span>
+              <span class="rev-summary">(${escapeHtml(rev.edit_summary || 'bez popisu')})</span>
+              ${isCurrent ? '<span style="color: #006644; font-weight: bold;">(aktuální verze)</span>' : ''}
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button type="button" class="btn btn-preview-rev" data-id="${rev.id}">Zobrazit text</button>
+              ${!isCurrent ? `<button type="button" class="btn btn-primary btn-restore-rev" data-id="${rev.id}" data-num="${rev.revision_number}">Obnovit tuto verzi</button>` : ''}
+            </div>
+          </li>
+        `;
+      }).join('');
+
+      // Obsluha zobrazení náhledu
+      document.querySelectorAll('.btn-preview-rev').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const revId = btn.getAttribute('data-id');
+          const target = revisions.find(r => r.id === revId);
+          if (target) {
+            document.getElementById('preview-header-text').textContent = `Náhled verze #${target.revision_number} (${formatDateTime(target.created_at)})`;
+            document.getElementById('preview-body-content').innerHTML = `
+              <h3>${escapeHtml(target.title)}</h3>
+              <p><em>Shrnutí: ${escapeHtml(target.summary || '')}</em></p>
+              <hr style="border: none; border-top: 1px solid var(--wiki-border-light); margin: 1rem 0;">
+              <div>${renderWikiMarkdown(target.content)}</div>
+            `;
+            document.getElementById('revision-preview-box').style.display = 'block';
+            document.getElementById('revision-preview-box').scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+
+      // Obsluha obnovení starší verze
+      document.querySelectorAll('.btn-restore-rev').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const revId = btn.getAttribute('data-id');
+          const revNum = btn.getAttribute('data-num');
+          const ok = confirm(`Opravdu si přejete obnovit článek do stavu z verze #${revNum}? Tím vznikne nová aktuální revize.`);
+          if (ok) {
+            try {
+              btn.disabled = true;
+              btn.textContent = 'Obnovuji...';
+              await restoreRevision(article.id, revId);
+              alert('Článek byl úspěšně obnoven!');
+              window.location.href = `article.html?slug=${encodeURIComponent(slug)}`;
+            } catch (err) {
+              alert('Chyba při obnově: ' + err.message);
+              btn.disabled = false;
+              btn.textContent = 'Obnovit tuto verzi';
+            }
+          }
+        });
+      });
+
+      document.getElementById('btn-close-preview')?.addEventListener('click', () => {
+        document.getElementById('revision-preview-box').style.display = 'none';
+      });
+    }
+  </script>
+</body>
+</html>

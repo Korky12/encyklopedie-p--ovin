@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Článek z Encyklopedie píčovin">
+  <title>Článek – Encyklopedie píčovin</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+  <a href="#content" class="skip-to-content">Přejít k hlavnímu obsahu</a>
+
+  <!-- Header -->
+  <header class="wiki-header" role="banner">
+    <div class="header-left">
+      <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle" aria-label="Přepnout navigaci" aria-expanded="false">☰</button>
+      <a href="index.html" class="site-logo">
+        <img src="assets/images/logo.svg" alt="Logo" class="site-logo-icon">
+        <div class="site-title-group">
+          <span class="site-title">Encyklopedie píčovin</span>
+          <span class="site-subtitle">Otevřená encyklopedie bizáru</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-search">
+      <form class="search-form" id="searchform" role="search">
+        <div class="search-input-wrapper">
+          <input type="search" name="search" placeholder="Hledat v Encyklopedii píčovin..." aria-label="Hledat v encyklopedii" class="search-input" id="searchInput" autocomplete="off">
+          <div class="search-suggestions hidden" id="searchSuggestions"></div>
+        </div>
+        <button type="submit" class="search-button">Hledat</button>
+      </form>
+    </div>
+
+    <div class="header-right">
+      <nav id="user-tools-container" aria-label="Uživatelské nástroje"></nav>
+    </div>
+  </header>
+
+  <div class="mw-body-wrapper">
+    <!-- Sidebar -->
+    <aside id="mw-panel" role="navigation" aria-label="Portály encyklopedie">
+      <div class="portal-box">
+        <h3 class="portal-heading">Navigace</h3>
+        <ul class="portal-list">
+          <li><a href="index.html">Hlavní strana</a></li>
+          <li><a href="#" class="nav-random-article">Náhodný článek</a></li>
+          <li><a href="category.html">Všechny kategorie</a></li>
+          <li><a href="timeline.html">Časová osa incidentů</a></li>
+          <li><a href="search.html">Vyhledávání</a></li>
+        </ul>
+      </div>
+
+      <div class="portal-box">
+        <h3 class="portal-heading">Spolupráce</h3>
+        <ul class="portal-list">
+          <li><a href="edit.html" id="sidebar-new-link">+ Vytvořit článek</a></li>
+          <li><a href="edit.html" id="sidebar-edit-link">Editovat tuto stránku</a></li>
+          <li><a href="history.html" id="sidebar-history-link">Zobrazit historii</a></li>
+        </ul>
+      </div>
+
+      <div class="portal-box">
+        <h3 class="portal-heading">Nástroje</h3>
+        <ul class="portal-list">
+          <li><a href="javascript:window.print()">Tisk / Export do PDF</a></li>
+          <li><a href="category.html" id="sidebar-category-link">Zobrazit kategorii</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main article container -->
+    <main id="content" class="mw-body" role="main">
+      <!-- Wikipedie Vector Tabs -->
+      <div class="vector-tabs-wrapper">
+        <ul class="vector-tabs" role="tablist">
+          <li><button type="button" class="vector-tab-link active" id="tab-btn-article" role="tab" aria-selected="true">Článek</button></li>
+          <li><button type="button" class="vector-tab-link" id="tab-btn-discussion" role="tab" aria-selected="false">Diskuse (<span id="comments-count">0</span>)</button></li>
+        </ul>
+        <ul class="vector-tabs">
+          <li><a href="#" class="vector-tab-link active" id="tab-link-read">Číst</a></li>
+          <li><a href="#" class="vector-tab-link" id="tab-link-edit">Editovat</a></li>
+          <li><a href="#" class="vector-tab-link" id="tab-link-history">Zobrazit historii</a></li>
+        </ul>
+      </div>
+
+      <!-- Pohled na článek -->
+      <div id="view-article-tab">
+        <div id="article-header-area">
+          <h1 id="firstHeading" class="firstHeading">Načítání článku...</h1>
+          <p class="siteSub">Z Encyklopedie píčovin, otevřené encyklopedie</p>
+        </div>
+
+        <div id="article-body-area">
+          <div id="infobox-placeholder"></div>
+          <div id="toc-placeholder"></div>
+          <div id="article-rendered-content">
+            <p><em>Hledám článek v archivu kroniky...</em></p>
+          </div>
+        </div>
+
+        <!-- Box kategorií na spodku článku -->
+        <div id="catlinks" class="catlinks" data-mw="interface">
+          <span class="catlinks-title">Kategorie:</span>
+          <ul class="catlinks-list" id="article-categories-list">
+            <li><em>Žádné kategorie</em></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Pohled na diskusi / komentáře -->
+      <div id="view-discussion-tab" style="display: none;">
+        <h2 class="wiki-heading">Diskuse k článku <span id="discussion-title-target"></span></h2>
+        <p class="siteSub">Zde můžete zanechat svědectví, vzpomínky nebo upřesnění k incidentu.</p>
+
+        <div class="wiki-comments">
+          <div id="comments-list">
+            <p><em>Zatím žádné komentáře. Buďte první!</em></p>
+          </div>
+
+          <div class="mp-box" style="margin-top: 2rem;">
+            <div class="mp-box-header">
+              <span>Přidat příspěvek do diskuse</span>
+            </div>
+            <div class="mp-box-body">
+              <form id="comment-form">
+                <div class="form-group">
+                  <label for="comment-author-name" class="form-label">Vaše jméno nebo přezdívka:</label>
+                  <input type="text" id="comment-author-name" class="form-control" placeholder="Např. Kuba nebo Soused z 2. patra" required>
+                </div>
+                <div class="form-group">
+                  <label for="comment-body" class="form-label">Text komentáře / svědectví:</label>
+                  <textarea id="comment-body" rows="3" class="form-control" placeholder="Co se tam tenkrát opravdu stalo..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" id="btn-submit-comment">Odeslat komentář</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer id="footer" role="contentinfo">
+        <ul class="footer-info-list">
+          <li id="footer-lastmod">Stránka byla naposledy editována dne...</li>
+          <li>Text je dostupný pod volnou kamarádskou licencí; mohou platit doplňkové podmínky piva.</li>
+          <li><a href="timeline.html">Časová osa</a> | <a href="category.html">Všechny kategorie</a> | <a href="index.html">Hlavní strana</a></li>
+        </ul>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initCommonUI } from './assets/js/ui.js';
+    import {
+      getArticleBySlug,
+      getArticles,
+      getComments,
+      addComment,
+      renderWikiMarkdown,
+      extractHeadings,
+      renderTocHtml,
+      formatDate,
+      formatDateTime,
+      escapeHtml,
+      slugify
+    } from './assets/js/articles.js';
+
+    await initCommonUI();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const slug = urlParams.get('slug') || 'incident-s-balkonovym-grilem-2023';
+
+    // Aktualizovat odkazy v navigaci
+    document.getElementById('tab-link-read').href = `article.html?slug=${encodeURIComponent(slug)}`;
+    document.getElementById('tab-link-edit').href = `edit.html?slug=${encodeURIComponent(slug)}`;
+    document.getElementById('tab-link-history').href = `history.html?slug=${encodeURIComponent(slug)}`;
+    document.getElementById('sidebar-edit-link').href = `edit.html?slug=${encodeURIComponent(slug)}`;
+    document.getElementById('sidebar-history-link').href = `history.html?slug=${encodeURIComponent(slug)}`;
+
+    // Přepínání záložek Článek vs Diskuse
+    const tabArticleBtn = document.getElementById('tab-btn-article');
+    const tabDiscBtn = document.getElementById('tab-btn-discussion');
+    const viewArticleTab = document.getElementById('view-article-tab');
+    const viewDiscTab = document.getElementById('view-discussion-tab');
+
+    tabArticleBtn.addEventListener('click', () => {
+      tabArticleBtn.classList.add('active');
+      tabDiscBtn.classList.remove('active');
+      viewArticleTab.style.display = 'block';
+      viewDiscTab.style.display = 'none';
+    });
+
+    tabDiscBtn.addEventListener('click', () => {
+      tabDiscBtn.classList.add('active');
+      tabArticleBtn.classList.remove('active');
+      viewArticleTab.style.display = 'none';
+      viewDiscTab.style.display = 'block';
+    });
+
+    // Načtení dat článku
+    const article = await getArticleBySlug(slug);
+
+    if (!article) {
+      document.title = 'Článek nenalezen – Encyklopedie píčovin';
+      document.getElementById('firstHeading').textContent = 'Článek dosud neexistuje';
+      document.getElementById('article-rendered-content').innerHTML = `
+        <div class="wiki-notice">
+          <span><strong>Tento článek dosud nebyl vytvořen.</strong> Pokud máte informace k tomuto heslu, můžete ho vytvořit.</span>
+        </div>
+        <p><a href="edit.html?slug=${encodeURIComponent(slug)}&title=${encodeURIComponent(slug.replace(/-/g, ' '))}" class="btn btn-primary">+ Založit článek „${escapeHtml(slug)}“</a></p>
+      `;
+      document.getElementById('catlinks').style.display = 'none';
+    } else {
+      document.title = `${article.title} – Encyklopedie píčovin`;
+      document.getElementById('firstHeading').textContent = article.title;
+      document.getElementById('discussion-title-target').textContent = article.title;
+
+      // Všechny známé články pro barevné odlišení odkazů (modrý vs červený odkaz)
+      const allArticles = await getArticles();
+      const knownSlugs = new Set(allArticles.map(a => a.slug));
+
+      // 1. Infobox
+      if (article.infobox && article.infobox.data && article.infobox.data.length > 0) {
+        let infoboxHtml = `
+          <table class="infobox" role="presentation">
+            <tbody>
+              <tr><th colspan="2" class="infobox-title">${escapeHtml(article.title)}</th></tr>
+              ${article.infobox.type ? `<tr><td colspan="2" class="infobox-subheader">${escapeHtml(article.infobox.type)}</td></tr>` : ''}
+              ${article.infobox.image ? `<tr><td colspan="2" class="infobox-image"><img src="${escapeHtml(article.infobox.image)}" alt="${escapeHtml(article.title)}">${article.infobox.image_caption ? `<div class="infobox-caption">${escapeHtml(article.infobox.image_caption)}</div>` : ''}</td></tr>` : ''}
+        `;
+
+        for (const item of article.infobox.data) {
+          infoboxHtml += `
+            <tr>
+              <th scope="row" class="infobox-label">${escapeHtml(item.label)}</th>
+              <td class="infobox-data">${escapeHtml(item.value)}</td>
+            </tr>
+          `;
+        }
+        infoboxHtml += `</tbody></table>`;
+        document.getElementById('infobox-placeholder').innerHTML = infoboxHtml;
+      }
+
+      // 2. Obsah (TOC)
+      const headings = extractHeadings(article.content);
+      if (headings.length >= 2) {
+        document.getElementById('toc-placeholder').innerHTML = renderTocHtml(headings);
+      }
+
+      // 3. Tělo článku
+      const renderedHtml = renderWikiMarkdown(article.content, knownSlugs);
+      document.getElementById('article-rendered-content').innerHTML = renderedHtml;
+
+      // 4. Kategorie
+      const catListEl = document.getElementById('article-categories-list');
+      if (article.categories && article.categories.length > 0) {
+        catListEl.innerHTML = article.categories.map(cSlug => {
+          const catName = cSlug.replace(/-/g, ' ');
+          return `<li><a href="category.html?slug=${encodeURIComponent(cSlug)}">${escapeHtml(catName)}</a></li>`;
+        }).join('');
+      } else {
+        catListEl.innerHTML = `<li><em>Nezařazeno</em></li>`;
+      }
+
+      // 5. Patička
+      const dateText = formatDate(article.updated_at);
+      document.getElementById('footer-lastmod').innerHTML = `
+        Stránka byla naposledy editována dne <strong>${escapeHtml(dateText)}</strong>
+        ${article.updated_by ? `uživatelem <strong>${escapeHtml(article.updated_by)}</strong>` : ''}.
+      `;
+
+      // 6. Komentáře
+      loadComments(article.id);
+    }
+
+    async function loadComments(articleId) {
+      const comments = await getComments(articleId);
+      const commentsCountEl = document.getElementById('comments-count');
+      const listEl = document.getElementById('comments-list');
+
+      commentsCountEl.textContent = comments.length;
+
+      if (comments.length === 0) {
+        listEl.innerHTML = '<p><em>Zatím žádné komentáře. Buďte první, kdo zanechá svědectví!</em></p>';
+        return;
+      }
+
+      listEl.innerHTML = comments.map(c => `
+        <div class="comment-item">
+          <div class="comment-header">
+            <span class="comment-author">${escapeHtml(c.author_name || c.profiles?.display_name || 'Anonymní člen')}</span>
+            • <span>${formatDateTime(c.created_at)}</span>
+          </div>
+          <div class="comment-body">${escapeHtml(c.body)}</div>
+        </div>
+      `).join('');
+    }
+
+    // Formulář pro přidání komentáře
+    document.getElementById('comment-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!article) return;
+
+      const authorInput = document.getElementById('comment-author-name');
+      const bodyInput = document.getElementById('comment-body');
+      const submitBtn = document.getElementById('btn-submit-comment');
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Odesílám...';
+
+      try {
+        await addComment(article.id, bodyInput.value, authorInput.value);
+        bodyInput.value = '';
+        await loadComments(article.id);
+      } catch (err) {
+        alert('Chyba: ' + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Odeslat komentář';
+      }
+    });
+  </script>
+</body>
+</html>

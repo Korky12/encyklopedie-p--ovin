@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Editace článku – Encyklopedie píčovin">
+  <title>Editace článku – Encyklopedie píčovin</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+  <a href="#content" class="skip-to-content">Přejít k hlavnímu obsahu</a>
+
+  <!-- Header -->
+  <header class="wiki-header" role="banner">
+    <div class="header-left">
+      <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle" aria-label="Přepnout navigaci" aria-expanded="false">☰</button>
+      <a href="index.html" class="site-logo">
+        <img src="assets/images/logo.svg" alt="Logo" class="site-logo-icon">
+        <div class="site-title-group">
+          <span class="site-title">Encyklopedie píčovin</span>
+          <span class="site-subtitle">Editor hesel</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-search">
+      <form class="search-form" id="searchform" role="search">
+        <div class="search-input-wrapper">
+          <input type="search" name="search" placeholder="Hledat v encyklopedii..." aria-label="Hledat" class="search-input" id="searchInput" autocomplete="off">
+          <div class="search-suggestions hidden" id="searchSuggestions"></div>
+        </div>
+        <button type="submit" class="search-button">Hledat</button>
+      </form>
+    </div>
+
+    <div class="header-right">
+      <nav id="user-tools-container" aria-label="Uživatelské nástroje"></nav>
+    </div>
+  </header>
+
+  <div class="mw-body-wrapper">
+    <!-- Sidebar -->
+    <aside id="mw-panel" role="navigation" aria-label="Portály encyklopedie">
+      <div class="portal-box">
+        <h3 class="portal-heading">Navigace</h3>
+        <ul class="portal-list">
+          <li><a href="index.html">Hlavní strana</a></li>
+          <li><a href="#" class="nav-random-article">Náhodný článek</a></li>
+          <li><a href="category.html">Všechny kategorie</a></li>
+          <li><a href="timeline.html">Časová osa</a></li>
+        </ul>
+      </div>
+
+      <div class="portal-box">
+        <h3 class="portal-heading">Pomůcka pro zápis</h3>
+        <ul class="portal-list" style="font-size: 0.78rem; color: #555;">
+          <li><code>[[nazev-clanku]]</code> odkaz</li>
+          <li><code>[[slug|Text]]</code> vlastní odkaz</li>
+          <li><code>## Nadpis sekce</code></li>
+          <li><code>**tučné písmo**</code></li>
+          <li><code>*kurzíva*</code></li>
+          <li><code>- odrážka</code></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main edit container -->
+    <main id="content" class="mw-body" role="main">
+      <div class="vector-tabs-wrapper">
+        <ul class="vector-tabs">
+          <li><button type="button" class="vector-tab-link active" id="tab-editor">Editor kódu</button></li>
+          <li><button type="button" class="vector-tab-link" id="tab-preview">Živý náhled</button></li>
+        </ul>
+        <ul class="vector-tabs">
+          <li><a href="#" id="cancel-link" class="vector-tab-link">Zrušit / Zpět</a></li>
+        </ul>
+      </div>
+
+      <h1 id="edit-page-title" class="firstHeading">Editace článku</h1>
+      <p class="siteSub">Ujistěte se, že záznam obsahuje skutečné perly a odpovídá historické pravdě.</p>
+
+      <form id="article-edit-form" style="margin-top: 1.5rem;">
+        <!-- Název a typ -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="article-title" class="form-label">Název článku / incidentu: *</label>
+            <input type="text" id="article-title" class="form-control" required placeholder="Např. Incident s balkonovým grilem (2023)">
+            <div class="form-hint">Slug pro URL: <code id="slug-preview">...</code></div>
+          </div>
+
+          <div class="form-group">
+            <label for="article-type" class="form-label">Typ záznamu:</label>
+            <select id="article-type" class="form-control">
+              <option value="incident">Incident / Událost</option>
+              <option value="person">Osoba / Místní hrdina</option>
+              <option value="quote">Zlatá hláška / Citát</option>
+              <option value="place">Kultovní místo / Pajzl</option>
+              <option value="general">Obecný pojem / Fenomén</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Krátké shrnutí -->
+        <div class="form-group">
+          <label for="article-summary" class="form-label">Krátké shrnutí (perex):</label>
+          <input type="text" id="article-summary" class="form-control" placeholder="1-2 věty vystihující podstatu...">
+        </div>
+
+        <!-- Datum a místo (pro incidenty) -->
+        <div id="incident-meta-fields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="incident-date" class="form-label">Datum a čas incidentu:</label>
+            <input type="datetime-local" id="incident-date" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="incident-location" class="form-label">Místo události:</label>
+            <input type="text" id="incident-location" class="form-control" placeholder="Např. Balkón 3. patro">
+          </div>
+        </div>
+
+        <!-- Kategorie -->
+        <div class="form-group">
+          <label class="form-label">Zařazení do kategorií:</label>
+          <div id="categories-checkboxes" style="display: flex; flex-wrap: wrap; gap: 1rem; padding: 0.5rem; background: #f8f9fa; border: 1px solid var(--wiki-border-light); border-radius: 2px;">
+            <!-- Naplněno dynamicky skriptem -->
+          </div>
+        </div>
+
+        <!-- Tělo článku vs Náhled -->
+        <div id="editor-pane">
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <label for="article-content" class="form-label" style="margin: 0;">Text článku (Wiki Markdown): *</label>
+              <span style="font-size: 0.8rem; color: var(--wiki-text-muted);">Podporuje nadpisy <code>##</code>, odkazy <code>[[clanek]]</code></span>
+            </div>
+            <textarea id="article-content" rows="18" class="form-control" required placeholder="## Úvod&#10;Všechno začalo nevinnou sázkou...&#10;&#10;## Průběh incidentu&#10;1. Krok jedna...&#10;&#10;## Následky a škody"></textarea>
+          </div>
+        </div>
+
+        <div id="preview-pane" style="display: none; border: 1px solid var(--wiki-border); padding: 1.5rem; background-color: #fff; margin-bottom: 1.5rem;">
+          <div id="preview-content-rendered"></div>
+        </div>
+
+        <!-- Shrnutí editace a podpis -->
+        <div class="mp-box" style="margin-top: 1.5rem;">
+          <div class="mp-box-header">
+            <span>Uložení změn a nová revize</span>
+          </div>
+          <div class="mp-box-body">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+              <div class="form-group" style="margin-bottom: 0.5rem;">
+                <label for="edit-summary" class="form-label">Shrnutí editace (co se změnilo):</label>
+                <input type="text" id="edit-summary" class="form-control" placeholder="Např. Doplnění detailů o likvidaci křesla">
+              </div>
+              <div class="form-group" style="margin-bottom: 0.5rem;">
+                <label for="editor-name" class="form-label">Podpis editora:</label>
+                <input type="text" id="editor-name" class="form-control" value="Kuba">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; margin-top: 1rem; align-items: center;">
+              <button type="submit" class="btn btn-primary" id="btn-save-article">Publikovat změny (vytvořit revizi)</button>
+              <button type="button" class="btn" id="btn-quick-preview">Zobrazit náhled</button>
+              <span id="save-status-msg" style="font-size: 0.9rem; font-weight: bold;"></span>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <footer id="footer" role="contentinfo">
+        <ul class="footer-info-list">
+          <li>Kliknutím na tlačítko Publikovat souhlasíte se zvěčněním tohoto zápisu v kronice party.</li>
+        </ul>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initCommonUI } from './assets/js/ui.js';
+    import {
+      getArticleBySlug,
+      getArticles,
+      getCategories,
+      saveArticle,
+      slugify,
+      renderWikiMarkdown,
+      escapeHtml
+    } from './assets/js/articles.js';
+    import { getCurrentUser } from './assets/js/auth.js';
+
+    await initCommonUI();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetSlug = urlParams.get('slug');
+    const paramTitle = urlParams.get('title');
+
+    const titleInput = document.getElementById('article-title');
+    const slugPreview = document.getElementById('slug-preview');
+    const summaryInput = document.getElementById('article-summary');
+    const contentInput = document.getElementById('article-content');
+    const typeSelect = document.getElementById('article-type');
+    const dateInput = document.getElementById('incident-date');
+    const locationInput = document.getElementById('incident-location');
+    const summaryEditInput = document.getElementById('edit-summary');
+    const editorNameInput = document.getElementById('editor-name');
+    const cancelLink = document.getElementById('cancel-link');
+
+    // Inicializace přihlášeného jména
+    const currentUser = await getCurrentUser();
+    if (currentUser) {
+      editorNameInput.value = currentUser.displayName;
+    }
+
+    // Načíst existující kategorie do checkboxů
+    const allCategories = await getCategories();
+    const categoriesContainer = document.getElementById('categories-checkboxes');
+    if (categoriesContainer) {
+      categoriesContainer.innerHTML = allCategories.map(cat => `
+        <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;">
+          <input type="checkbox" name="categories" value="${escapeHtml(cat.slug)}">
+          <span>${escapeHtml(cat.name)}</span>
+        </label>
+      `).join('');
+    }
+
+    let existingArticle = null;
+
+    if (targetSlug) {
+      existingArticle = await getArticleBySlug(targetSlug);
+    }
+
+    if (existingArticle) {
+      document.getElementById('edit-page-title').textContent = `Editace: ${existingArticle.title}`;
+      document.title = `Editace: ${existingArticle.title} – Encyklopedie píčovin`;
+      titleInput.value = existingArticle.title;
+      slugPreview.textContent = existingArticle.slug;
+      summaryInput.value = existingArticle.summary || '';
+      contentInput.value = existingArticle.content || '';
+      typeSelect.value = existingArticle.article_type || 'general';
+      if (existingArticle.incident_date) {
+        dateInput.value = existingArticle.incident_date.slice(0, 16);
+      }
+      locationInput.value = existingArticle.incident_location || '';
+      summaryEditInput.value = 'Úprava existujícího článku';
+
+      // Zaškrtnout kategorie
+      if (existingArticle.categories) {
+        document.querySelectorAll('input[name="categories"]').forEach(cb => {
+          if (existingArticle.categories.includes(cb.value)) {
+            cb.checked = true;
+          }
+        });
+      }
+
+      cancelLink.href = `article.html?slug=${encodeURIComponent(existingArticle.slug)}`;
+    } else {
+      document.getElementById('edit-page-title').textContent = 'Vytvoření nového článku';
+      document.title = 'Vytvořit článek – Encyklopedie píčovin';
+      if (paramTitle) {
+        titleInput.value = paramTitle;
+        slugPreview.textContent = slugify(paramTitle);
+      }
+      summaryEditInput.value = 'Založení nového článku';
+      cancelLink.href = 'index.html';
+    }
+
+    // Aktualizace slugu při psaní názvu
+    titleInput.addEventListener('input', () => {
+      if (!existingArticle) {
+        slugPreview.textContent = slugify(titleInput.value);
+      }
+    });
+
+    // Přepínání mezi editorem a živým náhledem
+    const tabEditor = document.getElementById('tab-editor');
+    const tabPreview = document.getElementById('tab-preview');
+    const editorPane = document.getElementById('editor-pane');
+    const previewPane = document.getElementById('preview-pane');
+    const previewContent = document.getElementById('preview-content-rendered');
+
+    async function showPreview() {
+      tabPreview.classList.add('active');
+      tabEditor.classList.remove('active');
+      editorPane.style.display = 'none';
+      previewPane.style.display = 'block';
+
+      const allArticles = await getArticles();
+      const knownSlugs = new Set(allArticles.map(a => a.slug));
+      previewContent.innerHTML = `
+        <h1>${escapeHtml(titleInput.value || 'Název článku')}</h1>
+        ${renderWikiMarkdown(contentInput.value, knownSlugs)}
+      `;
+    }
+
+    function showEditor() {
+      tabEditor.classList.add('active');
+      tabPreview.classList.remove('active');
+      editorPane.style.display = 'block';
+      previewPane.style.display = 'none';
+    }
+
+    tabPreview.addEventListener('click', showPreview);
+    document.getElementById('btn-quick-preview').addEventListener('click', showPreview);
+    tabEditor.addEventListener('click', showEditor);
+
+    // Odeslání a uložení článku
+    document.getElementById('article-edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const title = titleInput.value.trim();
+      const content = contentInput.value.trim();
+      if (!title || !content) {
+        alert('Vyplňte prosím název i obsah článku.');
+        return;
+      }
+
+      const selectedCategories = Array.from(document.querySelectorAll('input[name="categories"]:checked')).map(cb => cb.value);
+
+      const payload = {
+        id: existingArticle ? existingArticle.id : undefined,
+        slug: existingArticle ? existingArticle.slug : slugify(title),
+        title,
+        summary: summaryInput.value.trim(),
+        content,
+        article_type: typeSelect.value,
+        incident_date: dateInput.value ? new Date(dateInput.value).toISOString() : null,
+        incident_location: locationInput.value.trim(),
+        categories: selectedCategories
+      };
+
+      const btnSave = document.getElementById('btn-save-article');
+      const statusMsg = document.getElementById('save-status-msg');
+
+      btnSave.disabled = true;
+      statusMsg.textContent = 'Ukládám revizi...';
+      statusMsg.style.color = '#3366cc';
+
+      try {
+        const result = await saveArticle(payload, summaryEditInput.value.trim(), editorNameInput.value.trim());
+        statusMsg.textContent = 'Uloženo! Přesměrovávám...';
+        statusMsg.style.color = 'green';
+        setTimeout(() => {
+          window.location.href = `article.html?slug=${encodeURIComponent(result.slug)}`;
+        }, 600);
+      } catch (err) {
+        btnSave.disabled = false;
+        statusMsg.textContent = 'Chyba: ' + err.message;
+        statusMsg.style.color = 'red';
+      }
+    });
+  </script>
+</body>
+</html>

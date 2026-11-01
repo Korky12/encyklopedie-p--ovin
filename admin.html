@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Správa a moderace – Encyklopedie píčovin">
+  <title>Správa encyklopedie – Encyklopedie píčovin</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+  <a href="#content" class="skip-to-content">Přejít k hlavnímu obsahu</a>
+
+  <!-- Header -->
+  <header class="wiki-header" role="banner">
+    <div class="header-left">
+      <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle" aria-label="Přepnout navigaci" aria-expanded="false">☰</button>
+      <a href="index.html" class="site-logo">
+        <img src="assets/images/logo.svg" alt="Logo" class="site-logo-icon">
+        <div class="site-title-group">
+          <span class="site-title">Encyklopedie píčovin</span>
+          <span class="site-subtitle">Administrace</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-search">
+      <form class="search-form" id="searchform" role="search">
+        <div class="search-input-wrapper">
+          <input type="search" name="search" placeholder="Hledat..." class="search-input" id="searchInput" autocomplete="off">
+          <div class="search-suggestions hidden" id="searchSuggestions"></div>
+        </div>
+        <button type="submit" class="search-button">Hledat</button>
+      </form>
+    </div>
+
+    <div class="header-right">
+      <nav id="user-tools-container" aria-label="Uživatelské nástroje"></nav>
+    </div>
+  </header>
+
+  <div class="mw-body-wrapper">
+    <!-- Sidebar -->
+    <aside id="mw-panel" role="navigation" aria-label="Portály encyklopedie">
+      <div class="portal-box">
+        <h3 class="portal-heading">Navigace</h3>
+        <ul class="portal-list">
+          <li><a href="index.html">Hlavní strana</a></li>
+          <li><a href="category.html">Kategorie</a></li>
+          <li><a href="timeline.html">Časová osa</a></li>
+        </ul>
+      </div>
+
+      <div class="portal-box">
+        <h3 class="portal-heading">Rychlá volba role</h3>
+        <ul class="portal-list" style="font-size: 0.8rem;">
+          <li>Pro vyzkoušení admin práv vyberte v žluté liště nahoře volbu <strong>„Administrátor“</strong>.</li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main id="content" class="mw-body" role="main">
+      <h1 class="firstHeading">Administrátorský panel & Moderace</h1>
+      <p class="siteSub">Správa článků, soft-delete, schvalování revizí a moderace obsahu.</p>
+
+      <div id="admin-denied-box" style="display: none;" class="wiki-notice" style="background-color: #ffebe6; border-color: #ffbdad; color: #de350b;">
+        <span><strong>Přístup odepřen:</strong> Tato sekce vyžaduje administrátorská oprávnění (role <code>admin</code>). V demo režimu můžete roli přepnout v horním žlutém proužku.</span>
+      </div>
+
+      <div id="admin-panel-content" style="display: none;">
+        <!-- Správa článků -->
+        <div class="mp-box">
+          <div class="mp-box-header">
+            <span>Přehled všech článků v systému (včetně skrytých a smazaných)</span>
+          </div>
+          <div class="mp-box-body">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+              <thead>
+                <tr style="border-bottom: 2px solid var(--wiki-border); text-align: left;">
+                  <th style="padding: 0.5rem;">Název</th>
+                  <th style="padding: 0.5rem;">Typ</th>
+                  <th style="padding: 0.5rem;">Stav</th>
+                  <th style="padding: 0.5rem;">Poslední úprava</th>
+                  <th style="padding: 0.5rem; text-align: right;">Akce</th>
+                </tr>
+              </thead>
+              <tbody id="admin-articles-table">
+                <!-- Dynamicky -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Správa nahlášení a komentářů -->
+        <div class="mp-box" style="margin-top: 1.5rem;">
+          <div class="mp-box-header">
+            <span>Moderace diskusí a ochrana soukromí</span>
+          </div>
+          <div class="mp-box-body">
+            <p style="font-size: 0.9rem;">
+              V souladu s pravidly projektu <strong>Encyklopedie píčovin</strong> nesmí žádný článek obsahovat citlivé osobní údaje (adresy, telefonní čísla, hesla ani rodná čísla).
+              Pokud kdokoliv z party požádá o skrytí či úpravu nevhodného obsahu, administrátor má povinnost heslo skrýt nebo soft-deletovat.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <footer id="footer" role="contentinfo">
+        <ul class="footer-info-list">
+          <li><a href="index.html">Hlavní strana</a> | <a href="profile.html">Můj profil</a></li>
+        </ul>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initCommonUI } from './assets/js/ui.js';
+    import { getCurrentUser } from './assets/js/auth.js';
+    import { getLocalStore, isDemoMode, supabase } from './assets/js/supabase-client.js';
+    import { formatDate, escapeHtml } from './assets/js/articles.js';
+
+    await initCommonUI();
+
+    const user = await getCurrentUser();
+    const isUserAdmin = user && user.role === 'admin';
+
+    if (!isUserAdmin) {
+      document.getElementById('admin-denied-box').style.display = 'block';
+    } else {
+      document.getElementById('admin-panel-content').style.display = 'block';
+      loadArticlesForAdmin();
+    }
+
+    async function loadArticlesForAdmin() {
+      const store = getLocalStore();
+      let articles = store.getArticles();
+
+      if (!isDemoMode && supabase) {
+        const { data, error } = await supabase.from('articles').select('*').order('created_at', { ascending: false });
+        if (!error && data) articles = data;
+      }
+
+      const tbody = document.getElementById('admin-articles-table');
+
+      tbody.innerHTML = articles.map(a => {
+        const statusBadge = a.status === 'published'
+          ? '<span style="color: #006644; font-weight: bold;">Publikován</span>'
+          : (a.status === 'hidden' ? '<span style="color: #856404; font-weight: bold;">Skrytý</span>' : '<span style="color: #d33; font-weight: bold;">Smazaný (soft)</span>');
+
+        return `
+          <tr style="border-bottom: 1px solid var(--wiki-border-light);">
+            <td style="padding: 0.6rem 0.5rem;">
+              <strong><a href="article.html?slug=${encodeURIComponent(a.slug)}">${escapeHtml(a.title)}</a></strong>
+            </td>
+            <td style="padding: 0.6rem 0.5rem;">${escapeHtml(a.article_type || 'obecný')}</td>
+            <td style="padding: 0.6rem 0.5rem;">${statusBadge}</td>
+            <td style="padding: 0.6rem 0.5rem; font-size: 0.85rem;">${formatDate(a.updated_at)}</td>
+            <td style="padding: 0.6rem 0.5rem; text-align: right;">
+              <a href="edit.html?slug=${encodeURIComponent(a.slug)}" class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Editovat</a>
+              ${a.status !== 'deleted'
+                ? `<button type="button" class="btn btn-danger btn-soft-delete" data-id="${a.id}" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin-left: 0.3rem;">Smazat</button>`
+                : `<button type="button" class="btn btn-primary btn-restore-article" data-id="${a.id}" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin-left: 0.3rem;">Obnovit</button>`
+              }
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Obsluha soft-delete
+      document.querySelectorAll('.btn-soft-delete').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          if (confirm('Opravdu chcete tento článek soft-deletovat? Článek přestane být viditelný pro běžné čtenáře.')) {
+            const all = store.getArticles();
+            const target = all.find(x => x.id === id);
+            if (target) {
+              target.status = 'deleted';
+              store.saveArticles(all);
+              loadArticlesForAdmin();
+            }
+          }
+        });
+      });
+
+      // Obsluha obnovení smazaného článku
+      document.querySelectorAll('.btn-restore-article').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          const all = store.getArticles();
+          const target = all.find(x => x.id === id);
+          if (target) {
+            target.status = 'published';
+            store.saveArticles(all);
+            loadArticlesForAdmin();
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>

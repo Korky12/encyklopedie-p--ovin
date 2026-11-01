@@ -1,0 +1,55 @@
+  ### Co bylo vytvořeno                                                                                                                                     
+                                                                                                                                                            
+  1. Struktura rozhraní (Wikipedie Vector skin):                                                                                                            
+      • index.html – Hlavní portál (Článek týdne, Víte že..., přehled kategorií, statistiky kroniky).                                                       
+      • article.html – Stránka hesel s postranním infoboxem, generovaným obsahem (#toc) s tlačítkem [skrýt], interními wikilinky ([[odkaz]] s               
+      modrým/červeným odlišením) a záložkou diskuse.                                                                                                        
+      • edit.html – Editor článků s živým náhledem, nápovědou syntaxe, zadáním kategorií a formulářem shrnutí editace.                                      
+      • history.html – Historie revizí s možností prohlížet starší verze a jedním klikem provést jejich obnovu.                                             
+      • category.html – Přehled kategorií i detail kategorie s abecedním rejstříkem hesel.                                                                  
+      • timeline.html – Chronologická časová osa incidentů s filtrováním podle roků.                                                                        
+      • search.html – Vyhledávání s relevančním řazením a tolerancí české diakritiky.                                                                       
+      • login.html – Přihlašovací rozhraní (e-mail + heslo / Magic link).                                                                                   
+      • profile.html – Uživatelský profil a přehled vlastních úprav.                                                                                        
+      • admin.html – Administrátorský panel (moderace, soft-delete a obnova článků).                                                                        
+  2. Stylopis a grafika:                                                                                                                                    
+      • base.css – Autentická typografie Wikipedie (Linux Libertine, Georgia, sans-serif), modré a červené wikilinky, reset a přístupnost.                  
+      • layout.css – Záhlaví s vyhledávačem, levý navigační panel #mw-panel s responzivním mobilním menu.                                                   
+      • components.css – Infobox (table.infobox), obsah (#toc), spodní lišta kategorií (#catlinks), časová osa a našeptávač.                                
+      • logo.svg – Vektorové logo ve stylu Wikipedie.                                                                                                       
+  3. Logika v čistém JavaScriptu (ES moduly):                                                                                                               
+      • articles.js – Slugifikace, formátování data v češtině, bezpečný Markdown parser, generátor TOC, správa článků a revizí.                             
+      • search.js – Fulltextové hledání s normalizací diakritiky a interaktivním našeptávačem ovladatelným klávesnicí.                                      
+      • auth.js – Supabase Auth a správa rolí (member a admin).                                                                                             
+      • supabase-client.js & demo-data.js – Podpora okamžitého offline/demo náhledu bez nutnosti ihned konfigurovat Supabase.                               
+      • config.example.js – Vzorová konfigurace (lokální config.js je chráněn v .gitignore).                                                                
+  4. Databáze a migrace:                                                                                                                                    
+      • 20261101000000_initial_schema.sql – SQL schéma s tabulkami profiles, articles, article_revisions, categories, article_categories, comments, media,  
+      zapnutým Row Level Security (RLS) a atomickými RPC funkcemi save_article_revision a restore_article_revision.                                         
+      • seed.sql – Výchozí kategorie a ukázkový článek.                                                                                                     
+  5. Server a dokumentace:                                                                                                                                  
+      • server.js & package.json – Lehký lokální dev server bez externích závislostí.                                                                       
+      • README.md – Kompletní dokumentace k instalaci, nastavení Supabase a bezplatnému nasazení na Cloudflare Pages nebo GitHub Pages.                     
+                                                                                                                                                            
+  ──────                                                                                                                                                    
+  ### Ověření a testy                                                                                                                                       
+                                                                                                                                                            
+  Byly spuštěny unit testy pomocí Node.js test runneru (unit.test.js a migration.test.js):                                                                  
+                                                                                                                                                            
+    > node --test tests/*.test.js                                                                                                                           
+                                                                                                                                                            
+    ✔ Supabase SQL Migrace a RLS validace (4 testy prošly)                                                                                                  
+    ✔ Encyklopedie píčovin – Utility and Markdown tests (8 testů prošlo)                                                                                    
+    ℹ tests 12 | pass 12 | fail 0                                                                                                                           
+                                                                                                                                                            
+  Byl také ověřen lokální server na http://localhost:3000, který vrací kód 200 a správné MIME typy.                                                         
+  ──────                                                                                                                                                    
+  ### Jak projekt vyzkoušet                                                                                                                                 
+                                                                                                                                                            
+  1. Lokální spuštění:                                                                                                                                      
+    npm start                                                                                                                                               
+  a otevřete v prohlížeči http://localhost:3000. Web ihned funguje v režimu náhledu s ukázkovými daty. V horní liště lze testovat role (čtenář, člen,       
+  administrátor).                                                                                                                                           
+  2. Propojení s reálnou Supabase (volitelné):                                                                                                              
+      • Vložte obsah 20261101000000_initial_schema.sql a seed.sql do Supabase SQL Editoru.                                                                  
+      • Zkopírujte config.example.js do assets/js/config.js a doplňte své URL a veřejný anon klíč.        

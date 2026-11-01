@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Encyklopedie píčovin – otevřená webová encyklopedie pro kamarádskou partu ve stylu Wikipedie.">
+  <title>Hlavní strana – Encyklopedie píčovin</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+  <a href="#content" class="skip-to-content">Přejít k hlavnímu obsahu</a>
+
+  <!-- Horní lišta / Header -->
+  <header class="wiki-header" role="banner">
+    <div class="header-left">
+      <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle" aria-label="Přepnout navigaci" aria-expanded="false">☰</button>
+      <a href="index.html" class="site-logo">
+        <img src="assets/images/logo.svg" alt="Logo" class="site-logo-icon">
+        <div class="site-title-group">
+          <span class="site-title">Encyklopedie píčovin</span>
+          <span class="site-subtitle">Otevřená encyklopedie bizáru</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-search">
+      <form class="search-form" id="searchform" role="search">
+        <div class="search-input-wrapper">
+          <input type="search" name="search" placeholder="Hledat v Encyklopedii píčovin..." aria-label="Hledat v encyklopedii" class="search-input" id="searchInput" autocomplete="off">
+          <div class="search-suggestions hidden" id="searchSuggestions"></div>
+        </div>
+        <button type="submit" class="search-button">Hledat</button>
+      </form>
+    </div>
+
+    <div class="header-right">
+      <nav id="user-tools-container" aria-label="Uživatelské nástroje">
+        <!-- Generováno dynamicky přes ui.js -->
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hlavní tělo -->
+  <div class="mw-body-wrapper">
+    <!-- Levý navigační panel -->
+    <aside id="mw-panel" role="navigation" aria-label="Portály encyklopedie">
+      <div class="portal-box">
+        <h3 class="portal-heading">Navigace</h3>
+        <ul class="portal-list">
+          <li><a href="index.html"><strong>Hlavní strana</strong></a></li>
+          <li><a href="index.html#portal" class="nav-random-article">Náhodný článek</a></li>
+          <li><a href="category.html">Všechny kategorie</a></li>
+          <li><a href="timeline.html">Časová osa incidentů</a></li>
+          <li><a href="search.html">Vyhledávání hesel</a></li>
+        </ul>
+      </div>
+
+      <div class="portal-box">
+        <h3 class="portal-heading">Spolupráce</h3>
+        <ul class="portal-list">
+          <li><a href="edit.html"><strong>+ Přidat nový článek</strong></a></li>
+          <li><a href="article.html?slug=to-das-v-klidu-brasko">Zlatá hláška</a></li>
+          <li><a href="login.html">Přihlášení / Účet</a></li>
+        </ul>
+      </div>
+
+      <div class="portal-box">
+        <h3 class="portal-heading">O projektu</h3>
+        <ul class="portal-list">
+          <li><a href="article.html?slug=hospoda-u-zlomene-pipy">Základna party</a></li>
+          <li><a href="admin.html">Správa obsahu</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Hlavní obsah -->
+    <main id="content" class="mw-body" role="main">
+      <div class="vector-tabs-wrapper">
+        <ul class="vector-tabs">
+          <li><a href="index.html" class="vector-tab-link active">Hlavní strana</a></li>
+          <li><a href="timeline.html" class="vector-tab-link">Časová osa</a></li>
+        </ul>
+        <ul class="vector-tabs">
+          <li><a href="edit.html" class="vector-tab-link">+ Nový záznam</a></li>
+        </ul>
+      </div>
+
+      <h1 id="firstHeading" class="firstHeading">Vítejte v Encyklopedii píčovin</h1>
+      <p class="siteSub">Otevřená kronika našich největších průserů, historek, hlášek a lokálních legend.</p>
+
+      <!-- Portálová mřížka -->
+      <div class="portal-grid">
+        <!-- Levý sloupec: Článek týdne a kategorie -->
+        <div class="portal-col-main">
+          <!-- Článek týdne -->
+          <div class="mp-box">
+            <div class="mp-box-header">
+              <span>Článek týdne</span>
+              <a href="article.html?slug=incident-s-balkonovym-grilem-2023" style="font-size: 0.85rem; font-weight: normal;">Celý článek →</a>
+            </div>
+            <div class="mp-box-body">
+              <h3 class="mp-featured-title">
+                <a href="article.html?slug=incident-s-balkonovym-grilem-2023">Incident s balkonovým grilem (2023)</a>
+              </h3>
+              <p>
+                <strong>Incident s balkonovým grilem</strong> představuje jeden z klíčových milníků v moderních dějinách letních akcí naší party.
+                Událost proběhla v sobotu 15. července okolo 21:30 a její následky jsou na fasádě domu v paneláku C4 patrné dodnes.
+                Běžný pokus o upečení klobásy z babiččina mrazáku se po aplikaci technického lihu zvrhnul v lokální plamenné peklo,
+                při němž shořelo zahradní křeslo z Bauhausu a zasahoval soused ze 4. patra...
+              </p>
+              <div style="margin-top: 0.75rem;">
+                <a href="article.html?slug=incident-s-balkonovym-grilem-2023" class="btn btn-primary">Číst dál...</a>
+                <a href="edit.html?slug=incident-s-balkonovym-grilem-2023" class="btn" style="margin-left: 0.5rem;">Editovat</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Přehled kategorií -->
+          <div class="mp-box">
+            <div class="mp-box-header green">
+              <span>Kategorie encyklopedie</span>
+              <a href="category.html" style="font-size: 0.85rem; font-weight: normal;">Všechny kategorie →</a>
+            </div>
+            <div class="mp-box-body">
+              <p>Vyberte si kategorii a prozkoumejte archiv událostí, osob a legendárních incidentů:</p>
+              <div class="category-tags-cloud" id="categories-cloud">
+                <!-- Naplněno dynamicky skriptem -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pravý sloupec: Víte že..., Poslední incidenty, Hlášky -->
+        <div class="portal-col-side">
+          <!-- Víte že -->
+          <div class="mp-box">
+            <div class="mp-box-header gold">
+              <span>Víte, že...</span>
+            </div>
+            <div class="mp-box-body mp-did-you-know">
+              <ul>
+                <li>...výrok <a href="article.html?slug=to-das-v-klidu-brasko">„To dáš v klidu, bráško“</a> statisticky předcházel 87 % všech zdokumentovaných zranění a pádů?</li>
+                <li>...<a href="article.html?slug=mistr-tomas-voma">Mistr Tomáš „Vóma“</a> definoval konstantu, při které se každý začne cítit jako mistr světa ve stolním fotbálku?</li>
+                <li>...v <a href="article.html?slug=hospoda-u-zlomene-pipy">Hospodě U Zlomené pípy</a> se pivo netočí rychleji ani při hrozbě žízně?</li>
+                <li>...<a href="article.html?slug=syrove-monstrum-ze-mikrovlnky">Sýrové monstrum</a> přežilo i chemické čištění v myčce a muselo být vyhozeno i s talířem?</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Rychlá statistika -->
+          <div class="mp-box">
+            <div class="mp-box-header">
+              <span>Statistika projektu</span>
+            </div>
+            <div class="mp-box-body">
+              <ul style="list-style: none; margin: 0; padding: 0;">
+                <li style="margin-bottom: 0.4rem;"><strong>Článků v databázi:</strong> <span id="stat-articles-count">5</span></li>
+                <li style="margin-bottom: 0.4rem;"><strong>Kategorií:</strong> <span id="stat-categories-count">6</span></li>
+                <li style="margin-bottom: 0.4rem;"><strong>Poslední aktualizace:</strong> <span id="stat-last-update">dnes</span></li>
+              </ul>
+              <div style="margin-top: 1rem; border-top: 1px solid var(--wiki-border-light); padding-top: 0.75rem;">
+                <a href="edit.html" class="btn btn-primary" style="width: 100%;">+ Vytvořit nový záznam</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Patička stránky -->
+      <footer id="footer" role="contentinfo">
+        <ul class="footer-info-list">
+          <li>Tato stránka byla naposledy editována v rámci otevřeného kamarádského bádání.</li>
+          <li>Obsah je dostupný pro všechny přátele dobrého piva a bizarních zážitků.</li>
+          <li><a href="article.html?slug=hospoda-u-zlomene-pipy">Pravidla komunity</a> | <a href="admin.html">Administrace</a> | <a href="timeline.html">Časová osa</a></li>
+        </ul>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initCommonUI } from './assets/js/ui.js';
+    import { getArticles, getCategories, formatDate } from './assets/js/articles.js';
+
+    await initCommonUI();
+
+    // Načtení kategorií pro portál
+    const categories = await getCategories();
+    const cloudEl = document.getElementById('categories-cloud');
+    if (cloudEl && categories) {
+      cloudEl.innerHTML = categories.map(c => `
+        <a href="category.html?slug=${encodeURIComponent(c.slug)}" class="category-pill">
+          ${c.name}
+        </a>
+      `).join('');
+      document.getElementById('stat-categories-count').textContent = categories.length;
+    }
+
+    // Statistika článků
+    const articles = await getArticles();
+    if (articles) {
+      document.getElementById('stat-articles-count').textContent = articles.length;
+      if (articles.length > 0) {
+        document.getElementById('stat-last-update').textContent = formatDate(articles[0].updated_at);
+      }
+    }
+  </script>
+</body>
+</html>

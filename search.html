@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Výsledky vyhledávání – Encyklopedie píčovin">
+  <title>Výsledky hledání – Encyklopedie píčovin</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+  <a href="#content" class="skip-to-content">Přejít k hlavnímu obsahu</a>
+
+  <!-- Header -->
+  <header class="wiki-header" role="banner">
+    <div class="header-left">
+      <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle" aria-label="Přepnout navigaci" aria-expanded="false">☰</button>
+      <a href="index.html" class="site-logo">
+        <img src="assets/images/logo.svg" alt="Logo" class="site-logo-icon">
+        <div class="site-title-group">
+          <span class="site-title">Encyklopedie píčovin</span>
+          <span class="site-subtitle">Vyhledávání</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-search">
+      <form class="search-form" id="searchform" role="search">
+        <div class="search-input-wrapper">
+          <input type="search" name="search" placeholder="Hledat v encyklopedii..." class="search-input" id="searchInput" autocomplete="off">
+          <div class="search-suggestions hidden" id="searchSuggestions"></div>
+        </div>
+        <button type="submit" class="search-button">Hledat</button>
+      </form>
+    </div>
+
+    <div class="header-right">
+      <nav id="user-tools-container" aria-label="Uživatelské nástroje"></nav>
+    </div>
+  </header>
+
+  <div class="mw-body-wrapper">
+    <!-- Sidebar -->
+    <aside id="mw-panel" role="navigation" aria-label="Portály encyklopedie">
+      <div class="portal-box">
+        <h3 class="portal-heading">Navigace</h3>
+        <ul class="portal-list">
+          <li><a href="index.html">Hlavní strana</a></li>
+          <li><a href="#" class="nav-random-article">Náhodný článek</a></li>
+          <li><a href="category.html">Všechny kategorie</a></li>
+          <li><a href="timeline.html">Časová osa</a></li>
+        </ul>
+      </div>
+
+      <div class="portal-box">
+        <h3 class="portal-heading">Přidat článek</h3>
+        <ul class="portal-list">
+          <li><a href="edit.html" id="search-create-btn">+ Vytvořit nový článek</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main id="content" class="mw-body" role="main">
+      <h1 class="firstHeading">Výsledky vyhledávání</h1>
+      <p class="siteSub" id="search-sub">Dotaz: <strong id="query-display">...</strong></p>
+
+      <!-- Vyhledávací formulář na stránce -->
+      <div class="mp-box" style="margin-bottom: 2rem;">
+        <div class="mp-box-body">
+          <form id="page-search-form" style="display: flex; gap: 0.5rem;">
+            <input type="search" id="page-search-input" class="form-control" style="flex: 1;" placeholder="Zadejte hledaný výraz, jméno nebo hlášku...">
+            <button type="submit" class="btn btn-primary">Vyhledat</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="search-results-summary" style="font-size: 0.95rem; margin-bottom: 1.5rem; color: #555;"></div>
+
+      <div id="search-results-list">
+        <!-- Výsledky -->
+      </div>
+
+      <footer id="footer" role="contentinfo">
+        <ul class="footer-info-list">
+          <li><a href="index.html">Hlavní strana</a> | <a href="timeline.html">Časová osa</a></li>
+        </ul>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initCommonUI } from './assets/js/ui.js';
+    import { searchArticles } from './assets/js/search.js';
+    import { escapeHtml } from './assets/js/articles.js';
+
+    await initCommonUI();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = urlParams.get('q') || '';
+
+    const pageSearchInput = document.getElementById('page-search-input');
+    const queryDisplay = document.getElementById('query-display');
+    const resultsSummary = document.getElementById('search-results-summary');
+    const resultsList = document.getElementById('search-results-list');
+    const searchCreateBtn = document.getElementById('search-create-btn');
+
+    pageSearchInput.value = query;
+    queryDisplay.textContent = query ? `„${query}“` : 'žádný';
+
+    if (query) {
+      searchCreateBtn.href = `edit.html?title=${encodeURIComponent(query)}`;
+      performSearch(query);
+    } else {
+      resultsSummary.textContent = 'Zadejte hledaný výraz do pole výše.';
+    }
+
+    document.getElementById('page-search-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const newQ = pageSearchInput.value.trim();
+      if (newQ) {
+        window.location.href = `search.html?q=${encodeURIComponent(newQ)}`;
+      }
+    });
+
+    async function performSearch(searchTerm) {
+      resultsSummary.textContent = 'Prohledávám záznamy...';
+      const results = await searchArticles(searchTerm);
+
+      if (results.length === 0) {
+        resultsSummary.innerHTML = `Nebyly nalezeny žádné články odpovídající dotazu <strong>„${escapeHtml(searchTerm)}“</strong>.`;
+        resultsList.innerHTML = `
+          <div class="wiki-notice">
+            <span>
+              Chcete být první, kdo o tomto tématu napíše?
+              <a href="edit.html?title=${encodeURIComponent(searchTerm)}" class="btn btn-primary" style="margin-left: 0.5rem;">
+                + Vytvořit článek „${escapeHtml(searchTerm)}“
+              </a>
+            </span>
+          </div>
+        `;
+        return;
+      }
+
+      resultsSummary.innerHTML = `Nalezeno <strong>${results.length}</strong> ${results.length === 1 ? 'záznam' : (results.length < 5 ? 'záznamy' : 'záznamů')}:`;
+
+      resultsList.innerHTML = results.map(res => `
+        <article style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--wiki-border-light);">
+          <h2 style="font-size: 1.25rem; margin: 0 0 0.25rem 0; border: none;">
+            <a href="article.html?slug=${encodeURIComponent(res.article.slug)}">${escapeHtml(res.article.title)}</a>
+          </h2>
+          <div style="font-size: 0.8rem; color: #006644; margin-bottom: 0.35rem;">
+            Shoda: ${escapeHtml(res.matchType)} (skóre: ${res.score})
+          </div>
+          <p style="margin: 0; font-size: 0.95rem; color: #333;">
+            ${escapeHtml(res.snippet)}
+          </p>
+        </article>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

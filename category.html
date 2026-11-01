@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Kategorie – Encyklopedie píčovin">
+  <title>Kategorie – Encyklopedie píčovin</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+  <a href="#content" class="skip-to-content">Přejít k hlavnímu obsahu</a>
+
+  <!-- Header -->
+  <header class="wiki-header" role="banner">
+    <div class="header-left">
+      <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle" aria-label="Přepnout navigaci" aria-expanded="false">☰</button>
+      <a href="index.html" class="site-logo">
+        <img src="assets/images/logo.svg" alt="Logo" class="site-logo-icon">
+        <div class="site-title-group">
+          <span class="site-title">Encyklopedie píčovin</span>
+          <span class="site-subtitle">Kategorie</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-search">
+      <form class="search-form" id="searchform" role="search">
+        <div class="search-input-wrapper">
+          <input type="search" name="search" placeholder="Hledat v encyklopedii..." class="search-input" id="searchInput" autocomplete="off">
+          <div class="search-suggestions hidden" id="searchSuggestions"></div>
+        </div>
+        <button type="submit" class="search-button">Hledat</button>
+      </form>
+    </div>
+
+    <div class="header-right">
+      <nav id="user-tools-container" aria-label="Uživatelské nástroje"></nav>
+    </div>
+  </header>
+
+  <div class="mw-body-wrapper">
+    <!-- Sidebar -->
+    <aside id="mw-panel" role="navigation" aria-label="Portály encyklopedie">
+      <div class="portal-box">
+        <h3 class="portal-heading">Navigace</h3>
+        <ul class="portal-list">
+          <li><a href="index.html">Hlavní strana</a></li>
+          <li><a href="#" class="nav-random-article">Náhodný článek</a></li>
+          <li><a href="category.html"><strong>Všechny kategorie</strong></a></li>
+          <li><a href="timeline.html">Časová osa</a></li>
+        </ul>
+      </div>
+
+      <div class="portal-box">
+        <h3 class="portal-heading">Příspěvky</h3>
+        <ul class="portal-list">
+          <li><a href="edit.html">+ Založit nové heslo</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main id="content" class="mw-body" role="main">
+      <h1 id="category-heading" class="firstHeading">Kategorie: Všechna témata</h1>
+      <p class="siteSub" id="category-sub">Přehled tématických okruhů v naší encyklopedii.</p>
+
+      <!-- Pokud je zvolena konkrétní kategorie -->
+      <div id="single-category-view" style="display: none;">
+        <p id="single-category-desc" style="font-size: 1.05rem; margin-bottom: 1.5rem;"></p>
+
+        <h2>Články v kategorii „<span id="target-cat-name"></span>“</h2>
+        <p style="font-size: 0.85rem; color: var(--wiki-text-muted);">Následujících hesel bylo do této kategorie zařazeno:</p>
+
+        <div id="category-articles-grouped" style="margin-top: 1rem;">
+          <!-- Dynamicky rozděleno podle abecedy -->
+        </div>
+
+        <p style="margin-top: 2rem;"><a href="category.html">← Zobrazit všechny kategorie</a></p>
+      </div>
+
+      <!-- Pokud je zobrazen obecný přehled všech kategorií -->
+      <div id="all-categories-view">
+        <div class="portal-grid" id="categories-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+          <!-- Naplněno dynamicky -->
+        </div>
+      </div>
+
+      <footer id="footer" role="contentinfo">
+        <ul class="footer-info-list">
+          <li><a href="index.html">Zpět na Hlavní stranu</a> | <a href="timeline.html">Časová osa incidentů</a></li>
+        </ul>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initCommonUI } from './assets/js/ui.js';
+    import { getCategories, getArticles, escapeHtml } from './assets/js/articles.js';
+
+    await initCommonUI();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const catSlug = urlParams.get('slug');
+
+    const categories = await getCategories();
+    const articles = await getArticles();
+
+    if (catSlug) {
+      // Pohled na jednu kategorii
+      const cat = categories.find(c => c.slug === catSlug);
+      const catName = cat ? cat.name : catSlug.replace(/-/g, ' ');
+
+      document.title = `Kategorie: ${catName} – Encyklopedie píčovin`;
+      document.getElementById('category-heading').textContent = `Kategorie: ${catName}`;
+      document.getElementById('target-cat-name').textContent = catName;
+      document.getElementById('category-sub').textContent = 'Z Encyklopedie píčovin, otevřené encyklopedie';
+
+      if (cat && cat.description) {
+        document.getElementById('single-category-desc').textContent = cat.description;
+      }
+
+      document.getElementById('all-categories-view').style.display = 'none';
+      document.getElementById('single-category-view').style.display = 'block';
+
+      // Vyfiltrovat články pro tuto kategorii
+      const matchingArticles = articles.filter(a => a.categories && a.categories.includes(catSlug));
+      const groupEl = document.getElementById('category-articles-grouped');
+
+      if (matchingArticles.length === 0) {
+        groupEl.innerHTML = '<p><em>V této kategorii se zatím nenachází žádný článek.</em></p>';
+      } else {
+        // Seřadit abecedně
+        matchingArticles.sort((a, b) => a.title.localeCompare(b.title, 'cs'));
+
+        // Skupiny podle prvního písmene (Wikipedia styl)
+        const groups = {};
+        for (const art of matchingArticles) {
+          const firstChar = art.title.charAt(0).toUpperCase();
+          if (!groups[firstChar]) groups[firstChar] = [];
+          groups[firstChar].push(art);
+        }
+
+        let html = '';
+        for (const letter of Object.keys(groups).sort()) {
+          html += `
+            <div style="margin-bottom: 1.5rem;">
+              <h3 style="border-bottom: 1px solid var(--wiki-border-light); padding-bottom: 0.2rem; color: #333;">${letter}</h3>
+              <ul style="margin-left: 1.5em; line-height: 1.8;">
+          `;
+          for (const a of groups[letter]) {
+            html += `
+              <li>
+                <a href="article.html?slug=${encodeURIComponent(a.slug)}" style="font-weight: bold;">${escapeHtml(a.title)}</a>
+                ${a.summary ? ` – <span style="font-size: 0.88rem; color: #555;">${escapeHtml(a.summary)}</span>` : ''}
+              </li>
+            `;
+          }
+          html += `</ul></div>`;
+        }
+        groupEl.innerHTML = html;
+      }
+    } else {
+      // Všechny kategorie
+      document.title = 'Všechny kategorie – Encyklopedie píčovin';
+      const grid = document.getElementById('categories-grid');
+
+      grid.innerHTML = categories.map(c => {
+        const count = articles.filter(a => a.categories && a.categories.includes(c.slug)).length;
+        return `
+          <div class="mp-box">
+            <div class="mp-box-header">
+              <a href="category.html?slug=${encodeURIComponent(c.slug)}">${escapeHtml(c.name)}</a>
+              <span style="font-size: 0.8rem; background: #e0ecf7; padding: 0.1rem 0.4rem; border-radius: 10px;">${count}</span>
+            </div>
+            <div class="mp-box-body">
+              <p style="font-size: 0.88rem; color: #444; margin: 0 0 0.5rem 0;">${escapeHtml(c.description || '')}</p>
+              <a href="category.html?slug=${encodeURIComponent(c.slug)}" style="font-size: 0.85rem; font-weight: bold;">Zobrazit hesla →</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  </script>
+</body>
+</html>

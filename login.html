@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Přihlášení do Encyklopedie píčovin">
+  <title>Přihlášení – Encyklopedie píčovin</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+  <a href="#content" class="skip-to-content">Přejít k hlavnímu obsahu</a>
+
+  <!-- Header -->
+  <header class="wiki-header" role="banner">
+    <div class="header-left">
+      <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle" aria-label="Přepnout navigaci" aria-expanded="false">☰</button>
+      <a href="index.html" class="site-logo">
+        <img src="assets/images/logo.svg" alt="Logo" class="site-logo-icon">
+        <div class="site-title-group">
+          <span class="site-title">Encyklopedie píčovin</span>
+          <span class="site-subtitle">Přihlášení</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-search">
+      <form class="search-form" id="searchform" role="search">
+        <div class="search-input-wrapper">
+          <input type="search" name="search" placeholder="Hledat..." class="search-input" id="searchInput" autocomplete="off">
+          <div class="search-suggestions hidden" id="searchSuggestions"></div>
+        </div>
+        <button type="submit" class="search-button">Hledat</button>
+      </form>
+    </div>
+
+    <div class="header-right">
+      <nav id="user-tools-container" aria-label="Uživatelské nástroje"></nav>
+    </div>
+  </header>
+
+  <div class="mw-body-wrapper">
+    <!-- Sidebar -->
+    <aside id="mw-panel" role="navigation" aria-label="Portály encyklopedie">
+      <div class="portal-box">
+        <h3 class="portal-heading">Navigace</h3>
+        <ul class="portal-list">
+          <li><a href="index.html">Hlavní strana</a></li>
+          <li><a href="#" class="nav-random-article">Náhodný článek</a></li>
+          <li><a href="category.html">Kategorie</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main id="content" class="mw-body" role="main">
+      <h1 class="firstHeading">Přihlášení člena party</h1>
+      <p class="siteSub">Čtení článků je veřejné. Přihlášení slouží k úpravám, psaní hesel a schvalování revizí.</p>
+
+      <div style="max-width: 500px; margin: 2rem 0;">
+        <div class="mp-box">
+          <div class="mp-box-header">
+            <span>Přihlášení přes e-mail a heslo / Magic Link</span>
+          </div>
+          <div class="mp-box-body">
+            <div id="login-error-alert" class="wiki-notice" style="display: none; background-color: #ffebe6; border-color: #ffbdad; color: #de350b;"></div>
+            <div id="login-success-alert" class="wiki-notice" style="display: none; background-color: #e3fcef; border-color: #abf5d1; color: #006644;"></div>
+
+            <form id="login-form">
+              <div class="form-group">
+                <label for="login-email" class="form-label">E-mailová adresa:</label>
+                <input type="email" id="login-email" class="form-control" required placeholder="kuba@example.cz">
+              </div>
+
+              <div class="form-group">
+                <label for="login-password" class="form-label">Heslo:</label>
+                <input type="password" id="login-password" class="form-control" placeholder="••••••••">
+                <div class="form-hint">Nebo nechte prázdné a klikněte na „Poslat přihlašovací odkaz (Magic Link)“.</div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" id="btn-login-submit">Přihlásit se heslem</button>
+                <button type="button" class="btn" id="btn-magic-link">Poslat přihlašovací Magic Link na e-mail</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="wiki-notice" style="margin-top: 1.5rem;">
+          <span>
+            <strong>Omezená registrace:</strong> Aby nebyla encyklopedie poškozena náhodnými návštěvníky z internetu, nové účty zakládá administrátor. Pokud ještě nemáte přístup, požádejte o něj administrátora.
+          </span>
+        </div>
+      </div>
+
+      <footer id="footer" role="contentinfo">
+        <ul class="footer-info-list">
+          <li><a href="index.html">Hlavní strana</a></li>
+        </ul>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initCommonUI } from './assets/js/ui.js';
+    import { loginWithEmailPassword, loginWithMagicLink, getCurrentUser } from './assets/js/auth.js';
+
+    await initCommonUI();
+
+    const currentUser = await getCurrentUser();
+    if (currentUser) {
+      window.location.href = 'profile.html';
+    }
+
+    const errorAlert = document.getElementById('login-error-alert');
+    const successAlert = document.getElementById('login-success-alert');
+    const form = document.getElementById('login-form');
+    const emailInput = document.getElementById('login-email');
+    const passwordInput = document.getElementById('login-password');
+    const btnSubmit = document.getElementById('btn-login-submit');
+    const btnMagic = document.getElementById('btn-magic-link');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearAlerts();
+
+      if (!passwordInput.value) {
+        showError('Zadejte prosím heslo nebo využijte tlačítko Magic Link.');
+        return;
+      }
+
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Přihlašuji...';
+
+      try {
+        await loginWithEmailPassword(emailInput.value, passwordInput.value);
+        showSuccess('Přihlášení proběhlo úspěšně! Přesměrovávám...');
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 600);
+      } catch (err) {
+        showError(err.message || 'Chyba při přihlašování.');
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Přihlásit se heslem';
+      }
+    });
+
+    btnMagic.addEventListener('click', async () => {
+      clearAlerts();
+      const email = emailInput.value.trim();
+      if (!email) {
+        showError('Vyplňte prosím e-mailovou adresu pro odeslání odkazu.');
+        return;
+      }
+
+      btnMagic.disabled = true;
+      btnMagic.textContent = 'Odesílám odkaz...';
+
+      try {
+        await loginWithMagicLink(email);
+        showSuccess('Odkaz pro přihlášení byl odeslán na váš e-mail (v demo režimu jste byli rovnou přihlášeni)!');
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1000);
+      } catch (err) {
+        showError(err.message || 'Chyba při odesílání odkazu.');
+        btnMagic.disabled = false;
+        btnMagic.textContent = 'Poslat přihlašovací Magic Link na e-mail';
+      }
+    });
+
+    function showError(msg) {
+      errorAlert.textContent = msg;
+      errorAlert.style.display = 'block';
+    }
+
+    function showSuccess(msg) {
+      successAlert.textContent = msg;
+      successAlert.style.display = 'block';
+    }
+
+    function clearAlerts() {
+      errorAlert.style.display = 'none';
+      successAlert.style.display = 'none';
+    }
+  </script>
+</body>
+</html>

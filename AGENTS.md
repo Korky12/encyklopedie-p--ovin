@@ -79,6 +79,7 @@ Vizuálně se inspiruj rozložením Wikipedie, nikoli kopírováním jejího log
 - Zajisti viditelné stavy hover, focus, načítání, prázdného výsledku a chyby.
 - Přístupnost: sémantické HTML, popisky formulářů, ovládání klávesnicí, viditelný focus a dostatečný kontrast.
 - Nepřeháněj animace. Respektuj `prefers-reduced-motion`.
+- Žádné emoji, vzhled by měl být ultra-čistý jako wikipedie
 
 ### Vlastní identita
 - Humor a vulgarity patří hlavně do obsahu, názvů kategorií a drobných mikrotextů.

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <radialGradient id="grad" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="65%" stop-color="#f0f2f5"/>
+      <stop offset="100%" stop-color="#a2a9b1"/>
+    </radialGradient>
+  </defs>
+  <!-- Kruhový glóbus ve stylu puzzle Wikipedie -->
+  <circle cx="50" cy="50" r="45" fill="url(#grad)" stroke="#54595d" stroke-width="1.8"/>
+  
+  <!-- Poledníky a rovnoběžky -->
+  <path d="M 50 5 A 45 45 0 0 1 50 95 A 45 45 0 0 1 50 5" fill="none" stroke="#a2a9b1" stroke-width="1.2" stroke-dasharray="3,3"/>
+  <ellipse cx="50" cy="50" rx="25" ry="45" fill="none" stroke="#a2a9b1" stroke-width="1.2"/>
+  <line x1="5" y1="50" x2="95" y2="50" stroke="#a2a9b1" stroke-width="1.2"/>
+  <line x1="14" y1="28" x2="86" y2="28" stroke="#c8ccd1" stroke-width="1"/>
+  <line x1="14" y1="72" x2="86" y2="72" stroke="#c8ccd1" stroke-width="1"/>
+
+  <!-- Klasické knižní serifové písmeno W (jako Wikipedia / Wikipedia Vector) -->
+  <text x="50" y="66" font-family="'Linux Libertine', Georgia, 'Times New Roman', serif" font-size="44" font-weight="normal" fill="#202122" text-anchor="middle">W</text>
+</svg>
