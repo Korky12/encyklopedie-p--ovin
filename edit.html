@@ -129,6 +129,46 @@
           </div>
         </div>
 
+        <!-- Souhrnné okno (Infobox na pravé straně článku) -->
+        <div class="mp-box" style="margin-bottom: 1.5rem;">
+          <div class="mp-box-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Souhrnné okno (Infobox na pravé straně článku)</span>
+            <span style="font-size: 0.8rem; font-weight: normal; color: var(--wiki-text-muted);">Přehledná tabulka parametrů</span>
+          </div>
+          <div class="mp-box-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="infobox-type" class="form-label">Podtitul infoboxu:</label>
+                <input type="text" id="infobox-type" class="form-control" placeholder="Např. Incident, Osoba, Kultovní místo, Zlatá hláška">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="infobox-image" class="form-label">URL obrázku (volitelné):</label>
+                <input type="url" id="infobox-image" class="form-control" placeholder="https://example.com/obrazek.jpg">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;">
+              <span style="font-size: 0.85rem; font-weight: bold; margin-right: 0.3rem;">Předloha:</span>
+              <button type="button" class="btn" id="btn-tpl-incident" style="font-size: 0.8rem; padding: 0.2rem 0.5rem;">Šablona: Incident</button>
+              <button type="button" class="btn" id="btn-tpl-person" style="font-size: 0.8rem; padding: 0.2rem 0.5rem;">Šablona: Osoba</button>
+              <button type="button" class="btn" id="btn-tpl-place" style="font-size: 0.8rem; padding: 0.2rem 0.5rem;">Šablona: Pajzl / Místo</button>
+              <button type="button" class="btn" id="btn-tpl-quote" style="font-size: 0.8rem; padding: 0.2rem 0.5rem;">Šablona: Hláška</button>
+              <button type="button" class="btn" id="btn-tpl-clear" style="font-size: 0.8rem; padding: 0.2rem 0.5rem; color: #ba0000;">Vyčistit řádky</button>
+            </div>
+
+            <label class="form-label">Položky infoboxu (Štítek vlevo / Hodnota vpravo):</label>
+            <div id="infobox-rows-container" style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <!-- Dynamické řádky -->
+            </div>
+
+            <div style="margin-top: 0.75rem;">
+              <button type="button" class="btn" id="btn-add-infobox-row" style="font-size: 0.85rem;">
+                + Přidat parametr
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Tělo článku vs Náhled -->
         <div id="editor-pane">
           <div class="form-group">
@@ -208,6 +248,124 @@
     const editorNameInput = document.getElementById('editor-name');
     const cancelLink = document.getElementById('cancel-link');
 
+    // Elementy infoboxu
+    const infoboxTypeInput = document.getElementById('infobox-type');
+    const infoboxImageInput = document.getElementById('infobox-image');
+    const infoboxRowsContainer = document.getElementById('infobox-rows-container');
+
+    // Pomocná funkce pro vytvoření řádku v infoboxu
+    function addInfoboxRow(label = '', value = '') {
+      const row = document.createElement('div');
+      row.className = 'infobox-edit-row';
+      row.style.display = 'grid';
+      row.style.gridTemplateColumns = '1.2fr 2fr auto';
+      row.style.gap = '0.5rem';
+      row.style.alignItems = 'center';
+
+      row.innerHTML = `
+        <input type="text" class="form-control infobox-row-label" placeholder="Parametr (např. Místo)" value="${escapeHtml(label)}">
+        <input type="text" class="form-control infobox-row-value" placeholder="Hodnota (např. U Zlomené pípy)" value="${escapeHtml(value)}">
+        <button type="button" class="btn btn-remove-row" style="padding: 0.35rem 0.6rem; color: #ba0000; font-weight: bold;" title="Odstranit řádek">×</button>
+      `;
+
+      row.querySelector('.btn-remove-row').addEventListener('click', () => {
+        row.remove();
+      });
+
+      infoboxRowsContainer.appendChild(row);
+    }
+
+    // Načíst data z formuláře infoboxu do objektu
+    function getInfoboxData() {
+      const type = infoboxTypeInput.value.trim();
+      const image = infoboxImageInput.value.trim();
+      const rows = infoboxRowsContainer.querySelectorAll('.infobox-edit-row');
+      const data = [];
+
+      rows.forEach(r => {
+        const lbl = r.querySelector('.infobox-row-label').value.trim();
+        const val = r.querySelector('.infobox-row-value').value.trim();
+        if (lbl || val) {
+          data.push({ label: lbl, value: val });
+        }
+      });
+
+      return {
+        type: type,
+        image: image,
+        image_caption: '',
+        data: data
+      };
+    }
+
+    // Naplnit formulář infoboxu z objektu
+    function setInfoboxData(info) {
+      infoboxRowsContainer.innerHTML = '';
+      if (!info) return;
+
+      infoboxTypeInput.value = info.type || '';
+      infoboxImageInput.value = info.image || '';
+
+      if (Array.isArray(info.data)) {
+        info.data.forEach(item => {
+          addInfoboxRow(item.label, item.value);
+        });
+      }
+    }
+
+    // Tlačítko přidat parametr
+    document.getElementById('btn-add-infobox-row').addEventListener('click', () => {
+      addInfoboxRow();
+    });
+
+    // Šablony předloh
+    document.getElementById('btn-tpl-incident').addEventListener('click', () => {
+      infoboxTypeInput.value = 'Incident / Událost';
+      infoboxRowsContainer.innerHTML = '';
+      addInfoboxRow('Datum', dateInput.value ? dateInput.value.replace('T', ' ') : '');
+      addInfoboxRow('Místo', locationInput.value || '');
+      addInfoboxRow('Příčina', '');
+      addInfoboxRow('Oběti / Ztráty', '');
+      addInfoboxRow('Finanční škoda', '');
+      addInfoboxRow('Stav vyšetřování', '');
+    });
+
+    document.getElementById('btn-tpl-person').addEventListener('click', () => {
+      infoboxTypeInput.value = 'Osoba / Hrdina';
+      infoboxRowsContainer.innerHTML = '';
+      addInfoboxRow('Celé jméno', titleInput.value || '');
+      addInfoboxRow('Titul', '');
+      addInfoboxRow('Hlavní objev / zásluha', '');
+      addInfoboxRow('Oblíbený drink', '');
+      addInfoboxRow('Nejznámější hláška', '');
+      addInfoboxRow('Stav', 'Aktivní');
+    });
+
+    document.getElementById('btn-tpl-place').addEventListener('click', () => {
+      infoboxTypeInput.value = 'Lokalita / Pajzl';
+      infoboxRowsContainer.innerHTML = '';
+      addInfoboxRow('Adresa', '');
+      addInfoboxRow('Cenová skupina', 'IV.');
+      addInfoboxRow('Výčepní / Personál', '');
+      addInfoboxRow('Specialita podniku', '');
+      addInfoboxRow('Stav toalet', '');
+    });
+
+    document.getElementById('btn-tpl-quote').addEventListener('click', () => {
+      infoboxTypeInput.value = 'Zlatá hláška';
+      infoboxRowsContainer.innerHTML = '';
+      addInfoboxRow('Fráze', titleInput.value || '');
+      addInfoboxRow('Autor výroku', '');
+      addInfoboxRow('Kontext', '');
+      addInfoboxRow('Důsledky', '');
+    });
+
+    document.getElementById('btn-tpl-clear').addEventListener('click', () => {
+      if (confirm('Opravdu chcete vyčistit všechny řádky infoboxu?')) {
+        infoboxRowsContainer.innerHTML = '';
+      }
+    });
+
     // Inicializace přihlášeného jména
     const currentUser = await getCurrentUser();
     if (currentUser) {
@@ -255,6 +413,9 @@
         });
       }
 
+      // Načíst infobox
+      setInfoboxData(existingArticle.infobox_data || existingArticle.infobox || {});
+
       cancelLink.href = `article.html?slug=${encodeURIComponent(existingArticle.slug)}`;
     } else {
       document.getElementById('edit-page-title').textContent = 'Vytvoření nového článku';
@@ -265,6 +426,10 @@
       }
       summaryEditInput.value = 'Založení nového článku';
       cancelLink.href = 'index.html';
+
+      // Výchozí prázdné parametry pro usnadnění
+      addInfoboxRow('Datum', '');
+      addInfoboxRow('Místo', '');
     }
 
     // Aktualizace slugu při psaní názvu
@@ -289,7 +454,32 @@
 
       const allArticles = await getArticles();
       const knownSlugs = new Set(allArticles.map(a => a.slug));
+
+      const info = getInfoboxData();
+      let infoboxPreviewHtml = '';
+      if (info && info.data && info.data.length > 0) {
+        infoboxPreviewHtml = `
+          <table class="infobox" role="presentation">
+            <tbody>
+              <tr><th colspan="2" class="infobox-title">${escapeHtml(titleInput.value || 'Název článku')}</th></tr>
+              ${info.type ? `<tr><td colspan="2" class="infobox-subheader">${escapeHtml(info.type)}</td></tr>` : ''}
+              ${info.image ? `<tr><td colspan="2" class="infobox-image"><img src="${escapeHtml(info.image)}" alt="Obrázek infoboxu"></td></tr>` : ''}
+        `;
+        for (const it of info.data) {
+          if (it.label || it.value) {
+            infoboxPreviewHtml += `
+              <tr>
+                <th scope="row" class="infobox-label">${escapeHtml(it.label)}</th>
+                <td class="infobox-data">${escapeHtml(it.value)}</td>
+              </tr>
+            `;
+          }
+        }
+        infoboxPreviewHtml += `</tbody></table>`;
+      }
+
       previewContent.innerHTML = `
+        ${infoboxPreviewHtml}
         <h1>${escapeHtml(titleInput.value || 'Název článku')}</h1>
         ${renderWikiMarkdown(contentInput.value, knownSlugs)}
       `;
@@ -318,8 +508,21 @@
       }
 
       const selectedCategories = Array.from(document.querySelectorAll('input[name="categories"]:checked')).map(cb => cb.value);
+      const infobox = getInfoboxData();
 
       const payload = {
+        id: existingArticle ? existingArticle.id : undefined,
+        slug: existingArticle ? existingArticle.slug : slugify(title),
+        title,
+        summary: summaryInput.value.trim(),
+        content,
+        article_type: typeSelect.value,
+        incident_date: dateInput.value ? new Date(dateInput.value).toISOString() : null,
+        incident_location: locationInput.value.trim(),
+        categories: selectedCategories,
+        infobox: infobox,
+        infobox_data: infobox
+      };
         id: existingArticle ? existingArticle.id : undefined,
         slug: existingArticle ? existingArticle.slug : slugify(title),
         title,

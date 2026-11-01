@@ -300,6 +300,9 @@ export async function getArticleBySlug(slug) {
       console.warn('[Supabase] Článek nenalezen:', error.message);
       return getLocalStore().getArticles().find(a => a.slug === cleanSlug) || null;
     }
+    if (data) {
+      data.infobox = data.infobox_data || data.infobox || { type: data.article_type || 'Článek', data: [] };
+    }
     return data;
   }
 
@@ -406,6 +409,13 @@ export async function saveArticle(articleData, editSummary = 'Úprava článku',
       throw new Error('Pro uložení článku musíte být přihlášeni.');
     }
 
+    const infoboxData = articleData.infobox || articleData.infobox_data || {
+      type: articleData.article_type || 'Článek',
+      image: '',
+      image_caption: '',
+      data: []
+    };
+
     // Zavoláme bezpečnou RPC funkci nebo provedeme upsert
     const payload = {
       p_slug: slug,
@@ -415,12 +425,26 @@ export async function saveArticle(articleData, editSummary = 'Úprava článku',
       p_article_type: articleData.article_type || 'general',
       p_incident_date: articleData.incident_date || null,
       p_incident_location: articleData.incident_location || '',
-      p_edit_summary: editSummary
+      p_edit_summary: editSummary,
+      p_infobox_data: infoboxData
     };
 
+    let result = null;
     const { data, error } = await supabase.rpc('save_article_revision', payload);
-    if (error) throw error;
-    return data;
+    if (error) {
+      // Pokud existující RPC funkce v Supabase ještě nemá parametr p_infobox_data, zkusíme bez něj
+      delete payload.p_infobox_data;
+      const { data: retryData, error: retryErr } = await supabase.rpc('save_article_revision', payload);
+      if (retryErr) throw retryErr;
+      result = retryData;
+      // A infobox_data uložíme přímo do řádku článku
+      if (result && result.id) {
+        await supabase.from('articles').update({ infobox_data: infoboxData }).eq('id', result.id);
+      }
+    } else {
+      result = data;
+    }
+    return result;
   }
 
   // Demo režim v localStorage

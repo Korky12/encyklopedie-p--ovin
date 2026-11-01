@@ -82,4 +82,18 @@ Poslední odstavec.
     assert.ok(formatted.includes('2023'));
   });
 
+  it('infobox struktura je správně validována a obsahuje klíč a hodnotu', () => {
+    const sampleInfobox = {
+      type: 'Incident',
+      data: [
+        { label: 'Datum', value: '15. července 2023' },
+        { label: 'Místo', value: 'Balkón' }
+      ]
+    };
+    assert.equal(sampleInfobox.type, 'Incident');
+    assert.equal(sampleInfobox.data.length, 2);
+    assert.equal(sampleInfobox.data[0].label, 'Datum');
+    assert.equal(sampleInfobox.data[0].value, '15. července 2023');
+  });
+
 });

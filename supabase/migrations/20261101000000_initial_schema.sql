@@ -278,7 +278,8 @@ CREATE OR REPLACE FUNCTION public.save_article_revision(
     p_article_type article_type_enum,
     p_incident_date TIMESTAMPTZ,
     p_incident_location TEXT,
-    p_edit_summary TEXT
+    p_edit_summary TEXT,
+    p_infobox_data JSONB DEFAULT '{}'::jsonb
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -301,11 +302,11 @@ BEGIN
         -- Vytvoření nového článku
         INSERT INTO public.articles (
             slug, title, summary, content, article_type, incident_date, incident_location,
-            created_by, updated_by, status
+            infobox_data, created_by, updated_by, status
         )
         VALUES (
             p_slug, p_title, p_summary, p_content, p_article_type, p_incident_date, p_incident_location,
-            v_user_id, v_user_id, 'published'
+            COALESCE(p_infobox_data, '{}'::jsonb), v_user_id, v_user_id, 'published'
         )
         RETURNING id INTO v_article_id;
 
@@ -320,6 +321,7 @@ BEGIN
             article_type = p_article_type,
             incident_date = p_incident_date,
             incident_location = p_incident_location,
+            infobox_data = COALESCE(p_infobox_data, '{}'::jsonb),
             updated_by = v_user_id,
             updated_at = timezone('utc'::text, now())
         WHERE id = v_article_id;

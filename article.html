@@ -225,22 +225,25 @@
       const knownSlugs = new Set(allArticles.map(a => a.slug));
 
       // 1. Infobox
-      if (article.infobox && article.infobox.data && article.infobox.data.length > 0) {
+      const infobox = article.infobox || article.infobox_data;
+      if (infobox && infobox.data && infobox.data.length > 0) {
         let infoboxHtml = `
           <table class="infobox" role="presentation">
             <tbody>
               <tr><th colspan="2" class="infobox-title">${escapeHtml(article.title)}</th></tr>
-              ${article.infobox.type ? `<tr><td colspan="2" class="infobox-subheader">${escapeHtml(article.infobox.type)}</td></tr>` : ''}
-              ${article.infobox.image ? `<tr><td colspan="2" class="infobox-image"><img src="${escapeHtml(article.infobox.image)}" alt="${escapeHtml(article.title)}">${article.infobox.image_caption ? `<div class="infobox-caption">${escapeHtml(article.infobox.image_caption)}</div>` : ''}</td></tr>` : ''}
+              ${infobox.type ? `<tr><td colspan="2" class="infobox-subheader">${escapeHtml(infobox.type)}</td></tr>` : ''}
+              ${infobox.image ? `<tr><td colspan="2" class="infobox-image"><img src="${escapeHtml(infobox.image)}" alt="${escapeHtml(article.title)}">${infobox.image_caption ? `<div class="infobox-caption">${escapeHtml(infobox.image_caption)}</div>` : ''}</td></tr>` : ''}
         `;
 
-        for (const item of article.infobox.data) {
-          infoboxHtml += `
-            <tr>
-              <th scope="row" class="infobox-label">${escapeHtml(item.label)}</th>
-              <td class="infobox-data">${escapeHtml(item.value)}</td>
-            </tr>
-          `;
+        for (const item of infobox.data) {
+          if (item.label && item.value) {
+            infoboxHtml += `
+              <tr>
+                <th scope="row" class="infobox-label">${escapeHtml(item.label)}</th>
+                <td class="infobox-data">${escapeHtml(item.value)}</td>
+              </tr>
+            `;
+          }
         }
         infoboxHtml += `</tbody></table>`;
         document.getElementById('infobox-placeholder').innerHTML = infoboxHtml;
