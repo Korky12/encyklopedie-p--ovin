@@ -289,6 +289,19 @@ export async function getArticleBySlug(slug) {
   if (!slug) return null;
   const cleanSlug = slugify(slug);
 
+  try {
+    const apiRes = await fetch('/api/articles/' + encodeURIComponent(cleanSlug));
+    if (apiRes.ok) {
+      const serverArticle = await apiRes.json();
+      if (serverArticle && serverArticle.title) {
+        serverArticle.infobox = serverArticle.infobox || { type: serverArticle.article_type || 'Článek', data: [] };
+        return serverArticle;
+      }
+    }
+  } catch (err) {
+    // fallback do Supabase
+  }
+
   if (!isDemoMode && supabase) {
     const { data, error } = await supabase
       .from('articles')
@@ -321,7 +334,20 @@ export async function getCategories() {
   return getLocalStore().getCategories();
 }
 
-export async function getRevisions(articleId) {
+export async function getRevisions(articleId, slug = '') {
+  if (slug) {
+    try {
+      const apiRes = await fetch('/api/articles/' + encodeURIComponent(slug) + '/history');
+      if (apiRes.ok) {
+        const data = await apiRes.json();
+        if (data && Array.isArray(data.history) && data.history.length > 0) {
+          return data.history;
+        }
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
   if (!isDemoMode && supabase) {
     const { data, error } = await supabase
       .from('article_revisions')
@@ -415,6 +441,35 @@ export async function saveArticle(articleData, editSummary = 'Úprava článku',
       image_caption: '',
       data: []
     };
+
+    // 1. Zápis Markdownu na GitHub přes Node.js server API
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (token) {
+        await fetch('/api/articles', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            slug,
+            title: articleData.title,
+            summary: articleData.summary || '',
+            content: articleData.content || '',
+            article_type: articleData.article_type || 'general',
+            incident_date: articleData.incident_date || null,
+            incident_location: articleData.incident_location || '',
+            categories: articleData.categories || [],
+            infobox: infoboxData,
+            edit_summary: editSummary
+          })
+        });
+      }
+    } catch (ghErr) {
+      console.warn('[Server API] Uložení na GitHub selhalo, pokračuji do Supabase:', ghErr);
+    }
 
     // Zavoláme bezpečnou RPC funkci nebo provedeme upsert
     const payload = {

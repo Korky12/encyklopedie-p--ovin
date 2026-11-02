@@ -137,11 +137,11 @@
       document.title = `Historie: ${article.title} – Encyklopedie píčovin`;
       document.getElementById('article-title-target').textContent = article.title;
 
-      await loadHistory(article.id);
+      await loadHistory(article.id, article.slug);
     }
 
-    async function loadHistory(articleId) {
-      const revisions = await getRevisions(articleId);
+    async function loadHistory(articleId, articleSlug = "") {
+      const revisions = await getRevisions(articleId, articleSlug);
       const listEl = document.getElementById('revisions-list');
 
       if (revisions.length === 0) {

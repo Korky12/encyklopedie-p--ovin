@@ -14,5 +14,8 @@
     "vanilla-js"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^18.0.9"
+  }
 }
