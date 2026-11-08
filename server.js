@@ -10,13 +10,13 @@ const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 3000;
 
 // Konfigurace pro GitHub & Supabase z proměnných prostředí
-const CONFIG = {
+export const CONFIG = {
   supabaseUrl: process.env.SUPABASE_URL || '',
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
   githubToken: process.env.GITHUB_TOKEN || '',
   githubOwner: process.env.GITHUB_OWNER || '',
   githubRepo: process.env.GITHUB_REPO || '',
-  githubBranch: process.env.GITHUB_BRANCH || 'main',
+  githubBranch: process.env.GITHUB_BRANCH || 'master',
   articlesDir: process.env.GITHUB_CONTENT_DIR || 'content/articles',
   mediaDir: process.env.GITHUB_MEDIA_DIR || 'content/media',
   localFallbackDir: path.join(__dirname, 'content')
@@ -175,7 +175,8 @@ async function verifyUser(req) {
 // GitHub API / Local storage adaptér pro Markdown články
 // -------------------------------------------------------------
 async function readMarkdownArticle(slug) {
-  const filePath = `${CONFIG.articlesDir}/${slug}.md`;
+  const cfg = customConfig || CONFIG;
+  const filePath = `${cfg.articlesDir}/${slug}.md`;
 
   if (CONFIG.githubToken && CONFIG.githubOwner && CONFIG.githubRepo) {
     const url = `https://api.github.com/repos/${CONFIG.githubOwner}/${CONFIG.githubRepo}/contents/${filePath}?ref=${CONFIG.githubBranch}`;
@@ -216,17 +217,18 @@ async function readMarkdownArticle(slug) {
   };
 }
 
-async function writeMarkdownArticle(slug, metadata, content, commitMessage, authorInfo) {
-  const filePath = `${CONFIG.articlesDir}/${slug}.md`;
+export async function writeMarkdownArticle(slug, metadata, content, commitMessage, authorInfo, customConfig = CONFIG) {
+  const cfg = customConfig || CONFIG;
+  const filePath = `${cfg.articlesDir}/${slug}.md`;
   const fileContent = serializeMarkdownFile(metadata, content);
 
-  if (CONFIG.githubToken && CONFIG.githubOwner && CONFIG.githubRepo) {
+  if (cfg.githubToken && cfg.githubOwner && cfg.githubRepo) {
     // 1. Zjistit stávající SHA pro případnou aktualizaci
     let existingSha = null;
     try {
-      const checkRes = await fetch(`https://api.github.com/repos/${CONFIG.githubOwner}/${CONFIG.githubRepo}/contents/${filePath}?ref=${CONFIG.githubBranch}`, {
+      const checkRes = await fetch(`https://api.github.com/repos/${cfg.githubOwner}/${cfg.githubRepo}/contents/${filePath}?ref=${cfg.githubBranch}`, {
         headers: {
-          Authorization: `Bearer ${CONFIG.githubToken}`,
+          Authorization: `Bearer ${cfg.githubToken}`,
           Accept: 'application/vnd.github.v3+json',
           'User-Agent': 'Encyklopedie-Picovin'
         }
@@ -243,7 +245,7 @@ async function writeMarkdownArticle(slug, metadata, content, commitMessage, auth
     const bodyPayload = {
       message: commitMessage || `Aktualizace článku ${slug}`,
       content: Buffer.from(fileContent, 'utf-8').toString('base64'),
-      branch: CONFIG.githubBranch,
+      branch: cfg.githubBranch,
       committer: {
         name: authorInfo?.display_name || 'Encyklopedie Člen',
         email: authorInfo?.email || 'clen@encyklopedie.local'
@@ -253,10 +255,10 @@ async function writeMarkdownArticle(slug, metadata, content, commitMessage, auth
       bodyPayload.sha = existingSha;
     }
 
-    const putRes = await fetch(`https://api.github.com/repos/${CONFIG.githubOwner}/${CONFIG.githubRepo}/contents/${filePath}`, {
+    const putRes = await fetch(`https://api.github.com/repos/${cfg.githubOwner}/${cfg.githubRepo}/contents/${filePath}`, {
       method: 'PUT',
       headers: {
-        Authorization: `Bearer ${CONFIG.githubToken}`,
+        Authorization: `Bearer ${cfg.githubToken}`,
         Accept: 'application/vnd.github.v3+json',
         'Content-Type': 'application/json',
         'User-Agent': 'Encyklopedie-Picovin'
@@ -266,7 +268,10 @@ async function writeMarkdownArticle(slug, metadata, content, commitMessage, auth
 
     if (!putRes.ok) {
       const errText = await putRes.text();
-      throw new Error(`Chyba při ukládání na GitHub: ${putRes.status} ${errText}`);
+      const status = putRes.status;
+      const error = new Error(status === 409 ? 'Konflikt při zápisu na GitHub (409): soubor byl mezitím upraven.' : `Chyba při ukládání na GitHub (${status}): ${errText}`);
+      error.statusCode = status;
+      throw error;
     }
 
     const resultData = await putRes.json();
@@ -277,11 +282,7 @@ async function writeMarkdownArticle(slug, metadata, content, commitMessage, auth
     };
   }
 
-  // Lokální uložení
-  const localDir = path.join(CONFIG.localFallbackDir, 'articles');
-  fs.mkdirSync(localDir, { recursive: true });
-  fs.writeFileSync(path.join(localDir, `${slug}.md`), fileContent, 'utf-8');
-  return { success: true, slug, sha: 'local-sha' };
+  throw new Error('GitHub synchronizace není nakonfigurována (chybí GITHUB_TOKEN, GITHUB_OWNER nebo GITHUB_REPO).');
 }
 
 async function getArticleHistory(slug) {
@@ -445,7 +446,11 @@ export const server = http.createServer(async (req, res) => {
   });
 });
 
-if (process.env.NODE_ENV !== 'test') {
+const isTestEnv = process.env.NODE_ENV === 'test' ||
+  process.argv.some(arg => arg.includes('test')) ||
+  process.execArgv.some(arg => arg.includes('--test'));
+
+if (!isTestEnv) {
   server.listen(PORT, () => {
     console.log(`[Encyklopedie píčovin] Node.js server běží na http://localhost:${PORT}`);
     if (CONFIG.githubToken) {

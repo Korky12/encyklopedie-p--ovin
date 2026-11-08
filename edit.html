@@ -227,6 +227,7 @@
       getArticles,
       getCategories,
       saveArticle,
+      syncArticleToGithub,
       slugify,
       renderWikiMarkdown,
       escapeHtml
@@ -541,6 +542,38 @@
 
       try {
         const result = await saveArticle(payload, summaryEditInput.value.trim(), editorNameInput.value.trim());
+
+        if (result && result.githubSync && result.githubSync.success === false && !result.githubSync.skipped) {
+          btnSave.disabled = false;
+          statusMsg.style.color = '#b35900';
+          statusMsg.innerHTML = `
+            <span>Uloženo v Supabase, ale synchronizace na GitHub selhala: ${escapeHtml(result.githubSync.error || 'Neznámá chyba')}</span>
+            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+              <button type="button" class="btn btn-primary" id="btn-retry-github-sync" style="font-size: 0.85rem;">Opakovat synchronizaci na GitHub</button>
+              <a href="article.html?slug=${encodeURIComponent(result.slug)}" class="btn" style="font-size: 0.85rem;">Přejít na článek</a>
+            </div>
+          `;
+
+          document.getElementById('btn-retry-github-sync').addEventListener('click', async () => {
+            const retryBtn = document.getElementById('btn-retry-github-sync');
+            retryBtn.disabled = true;
+            retryBtn.textContent = 'Opakuji synchronizaci...';
+            try {
+              await syncArticleToGithub(payload, summaryEditInput.value.trim());
+              statusMsg.textContent = 'Synchronizace na GitHub úspěšná! Přesměrovávám...';
+              statusMsg.style.color = 'green';
+              setTimeout(() => {
+                window.location.href = `article.html?slug=${encodeURIComponent(result.slug)}`;
+              }, 600);
+            } catch (retryErr) {
+              retryBtn.disabled = false;
+              retryBtn.textContent = 'Opakovat znovu';
+              alert('Opakování synchronizace selhalo: ' + (retryErr.message || retryErr));
+            }
+          });
+          return;
+        }
+
         statusMsg.textContent = 'Uloženo! Přesměrovávám...';
         statusMsg.style.color = 'green';
         setTimeout(() => {
