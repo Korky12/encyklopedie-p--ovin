@@ -2,10 +2,10 @@
 title: Neříkej to Hoškovi
 summary: Adam Pavka si nepřál, aby Hošek zjistil že psal spolužačce
 article_type: incident
-incident_date: "2024-12-09T20:28:00.000Z"
-categories: []
+incident_date: "2024-12-09T19:28:00.000Z"
+categories: ["legendarni-incidenty"]
 infobox: {"type":"Neříkej to Hoškovi pls","image":"","image_caption":"","data":[{"label":"Datum","value":"9.12.2024"},{"label":"Odesílatel","value":"Adam Pavka"},{"label":"Příjemce","value":"Kája"},{"label":"Main enemy","value":"Hošek"},{"label":"Platforma","value":"Instagram"}]}
-updated_at: "2026-11-08T21:30:49.721Z"
+updated_at: "2026-11-08T21:31:16.894Z"
 updated_by: jakubhosek2009
 ---
 
