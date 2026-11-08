@@ -350,6 +350,15 @@ export const server = http.createServer(async (req, res) => {
   // ---------------- REST API ----------------
   if (pathname.startsWith('/api/')) {
     try {
+      // GET /api/config (veřejná klientská konfigurace pro frontend)
+      if (pathname === '/api/config' && req.method === 'GET') {
+        return json(res, {
+          supabaseUrl: CONFIG.supabaseUrl || '',
+          supabaseAnonKey: CONFIG.supabaseAnonKey || '',
+          configured: Boolean(CONFIG.supabaseUrl && CONFIG.supabaseAnonKey && CONFIG.supabaseUrl.startsWith('https://'))
+        });
+      }
+
       // GET /api/health
       if (pathname === '/api/health') {
         return json(res, {

@@ -1,6 +1,7 @@
 /**
- * Supabase klient s automatickým přechodem na Demo / LocalStorage režim,
- * pokud uživatel ještě nevyplnil své Supabase přístupové údaje v config.js.
+ * Supabase klient s automatickým přechodem na Demo / LocalStorage režim.
+ * Konfigurace se načítá buď z lokálního config.js, nebo dynamicky ze serveru (/api/config),
+ * což zajišťuje bezproblémový běh na hostingu (Render).
  */
 import { INITIAL_ARTICLES, INITIAL_CATEGORIES, INITIAL_REVISIONS, INITIAL_COMMENTS } from './demo-data.js';
 
@@ -10,13 +11,30 @@ let config = {
   fallbackToDemoData: true
 };
 
+// 1. Zkusíme načíst lokální config.js (pro lokální vývoj)
 try {
   const customConfig = await import('./config.js');
   if (customConfig && customConfig.SUPABASE_CONFIG) {
     config = { ...config, ...customConfig.SUPABASE_CONFIG };
   }
 } catch {
-  // config.js neexistuje, použijeme výchozí nastavení a demo data
+  // config.js neexistuje, zkusíme serverový endpoint
+}
+
+// 2. Pokud nemáme konfiguraci z config.js, zkusíme ji načíst ze serveru (/api/config)
+if ((!config.url || !config.anonKey) && typeof fetch !== 'undefined' && typeof window !== 'undefined') {
+  try {
+    const srvRes = await fetch('/api/config');
+    if (srvRes.ok) {
+      const srvData = await srvRes.json();
+      if (srvData && srvData.supabaseUrl && srvData.supabaseAnonKey) {
+        config.url = srvData.supabaseUrl;
+        config.anonKey = srvData.supabaseAnonKey;
+      }
+    }
+  } catch {
+    // server /api/config nedostupný
+  }
 }
 
 export const isConfigured = Boolean(config.url && config.anonKey && config.url.startsWith('https://'));
