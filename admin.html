@@ -120,7 +120,7 @@
     import { initCommonUI } from './assets/js/ui.js';
     import { getCurrentUser } from './assets/js/auth.js';
     import { getLocalStore, isDemoMode, supabase } from './assets/js/supabase-client.js';
-    import { formatDate, escapeHtml } from './assets/js/articles.js';
+    import { formatDate, escapeHtml, deleteArticle, restoreArticle } from './assets/js/articles.js';
 
     await initCommonUI();
 
@@ -161,8 +161,8 @@
             <td style="padding: 0.6rem 0.5rem; text-align: right;">
               <a href="edit.html?slug=${encodeURIComponent(a.slug)}" class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Editovat</a>
               ${a.status !== 'deleted'
-                ? `<button type="button" class="btn btn-danger btn-soft-delete" data-id="${a.id}" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin-left: 0.3rem;">Smazat</button>`
-                : `<button type="button" class="btn btn-primary btn-restore-article" data-id="${a.id}" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin-left: 0.3rem;">Obnovit</button>`
+                ? `<button type="button" class="btn btn-danger btn-soft-delete" data-id="${a.id}" data-slug="${escapeHtml(a.slug)}" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin-left: 0.3rem;">Smazat</button>`
+                : `<button type="button" class="btn btn-primary btn-restore-article" data-id="${a.id}" data-slug="${escapeHtml(a.slug)}" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin-left: 0.3rem;">Obnovit</button>`
               }
             </td>
           </tr>
@@ -173,13 +173,17 @@
       document.querySelectorAll('.btn-soft-delete').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.getAttribute('data-id');
-          if (confirm('Opravdu chcete tento článek soft-deletovat? Článek přestane být viditelný pro běžné čtenáře.')) {
-            const all = store.getArticles();
-            const target = all.find(x => x.id === id);
-            if (target) {
-              target.status = 'deleted';
-              store.saveArticles(all);
-              loadArticlesForAdmin();
+          const slug = btn.getAttribute('data-slug');
+          if (confirm('Opravdu chcete tento článek soft-deletovat? Článek přestane být viditelný pro běžné čtenáře a odstraní se z GitHubu.')) {
+            btn.disabled = true;
+            btn.textContent = 'Mažu...';
+            try {
+              await deleteArticle(id, slug);
+              await loadArticlesForAdmin();
+            } catch (err) {
+              btn.disabled = false;
+              btn.textContent = 'Smazat';
+              alert('Chyba při mazání článku: ' + (err.message || err));
             }
           }
         });
@@ -189,12 +193,16 @@
       document.querySelectorAll('.btn-restore-article').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.getAttribute('data-id');
-          const all = store.getArticles();
-          const target = all.find(x => x.id === id);
-          if (target) {
-            target.status = 'published';
-            store.saveArticles(all);
-            loadArticlesForAdmin();
+          const slug = btn.getAttribute('data-slug');
+          btn.disabled = true;
+          btn.textContent = 'Obnovuji...';
+          try {
+            await restoreArticle(id, slug);
+            await loadArticlesForAdmin();
+          } catch (err) {
+            btn.disabled = false;
+            btn.textContent = 'Obnovit';
+            alert('Chyba při obnovení článku: ' + (err.message || err));
           }
         });
       });

@@ -1,4 +1,96 @@
 
+export async function deleteArticle(articleId, slug) {
+  if (!isDemoMode && supabase) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Pro smazání článku musíte být přihlášeni.');
+    }
+
+    // 1. Soft-delete v Supabase (hlavní zdroj pravdy)
+    const { error: dbErr } = await supabase
+      .from('articles')
+      .update({ status: 'deleted', updated_at: new Date().toISOString() })
+      .eq('id', articleId);
+
+    if (dbErr) throw dbErr;
+
+    // 2. Odstranění z GitHub repozitáře přes serverový endpoint
+    let githubDelete = { success: false, skipped: true };
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (token && slug) {
+        const ghRes = await fetch('/api/articles/' + encodeURIComponent(slug), {
+          method: 'DELETE',
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        const ghJson = await ghRes.json().catch(() => ({}));
+        if (ghRes.ok) {
+          githubDelete = { success: true, result: ghJson };
+        } else {
+          githubDelete = { success: false, error: ghJson.error || ('HTTP ' + ghRes.status) };
+        }
+      }
+    } catch (ghErr) {
+      console.warn('[GitHub Delete] Selhalo odstranění souboru z GitHubu:', ghErr);
+      githubDelete = { success: false, error: ghErr.message };
+    }
+
+    return { success: true, articleId, slug, githubDelete };
+  }
+
+  // Demo režim v localStorage
+  const store = getLocalStore();
+  const all = store.getArticles();
+  const target = all.find(x => x.id === articleId || x.slug === slug);
+  if (target) {
+    target.status = 'deleted';
+    store.saveArticles(all);
+  }
+  return { success: true, articleId, slug };
+}
+
+export async function restoreArticle(articleId, slug) {
+  if (!isDemoMode && supabase) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Pro obnovení článku musíte být přihlášeni.');
+    }
+
+    const { error: dbErr } = await supabase
+      .from('articles')
+      .update({ status: 'published', updated_at: new Date().toISOString() })
+      .eq('id', articleId);
+
+    if (dbErr) throw dbErr;
+
+    if (slug) {
+      try {
+        const fullArticle = await getArticleBySlug(slug, true);
+        if (fullArticle) {
+          await syncArticleToGithub(fullArticle, 'Obnovení smazaného článku');
+        }
+      } catch (ghErr) {
+        console.warn('[GitHub Restore] Synchronizace obnoveného článku selhala:', ghErr);
+      }
+    }
+
+    return { success: true, articleId, slug };
+  }
+
+  const store = getLocalStore();
+  const all = store.getArticles();
+  const target = all.find(x => x.id === articleId || x.slug === slug);
+  if (target) {
+    target.status = 'published';
+    store.saveArticles(all);
+  }
+  return { success: true, articleId, slug };
+}
+
+
 export async function syncArticleToGithub(articlePayload, editSummary = 'Úprava článku') {
   if (isDemoMode || !supabase) {
     return { success: true, localOnly: true };
@@ -335,44 +427,51 @@ export async function getArticles() {
   return getLocalStore().getArticles().filter(a => a.status === 'published');
 }
 
-export async function getArticleBySlug(slug) {
-  if (!slug) return null;
-  const cleanSlug = slugify(slug);
-
-  try {
-    const apiRes = await fetch('/api/articles/' + encodeURIComponent(cleanSlug));
-    if (apiRes.ok) {
-      const serverArticle = await apiRes.json();
-      if (serverArticle && serverArticle.title) {
-        serverArticle.infobox = serverArticle.infobox || { type: serverArticle.article_type || 'Článek', data: [] };
-        return serverArticle;
-      }
-    }
-  } catch (err) {
-    // fallback do Supabase
-  }
-
-  if (!isDemoMode && supabase) {
-    const { data, error } = await supabase
-      .from('articles')
-      .select('*, profiles!created_by(display_name), article_categories(category_id, categories(name, slug))')
-      .eq('slug', cleanSlug)
-      .single();
-
-    if (error) {
-      console.warn('[Supabase] Článek nenalezen:', error.message);
-      return getLocalStore().getArticles().find(a => a.slug === cleanSlug) || null;
-    }
-    if (data) {
-      data.infobox = data.infobox_data || data.infobox || { type: data.article_type || 'Článek', data: [] };
-    }
-    return data;
-  }
-
-  const articles = getLocalStore().getArticles();
-  return articles.find(a => a.slug === cleanSlug) || null;
-}
-
+export async function getArticleBySlug(slug, allowNonPublished = false) {
+  if (!slug) return null;
+  const cleanSlug = slugify(slug);
+
+  if (!isDemoMode && supabase) {
+    const { data, error } = await supabase
+      .from('articles')
+      .select('*, profiles!created_by(display_name), article_categories(category_id, categories(name, slug))')
+      .eq('slug', cleanSlug)
+      .single();
+
+    if (!error && data) {
+      if (!allowNonPublished && data.status !== 'published') {
+        return null;
+      }
+      data.infobox = data.infobox_data || data.infobox || { type: data.article_type || 'Článek', data: [] };
+      return data;
+    }
+    if (error && error.code !== 'PGRST116') {
+      console.warn('[Supabase] Chyba při načtení článku:', error.message);
+    }
+  }
+
+  // Server / GitHub API (pouze pokud nebyl v Supabase nalezen a explicitně smazán)
+  try {
+    const apiRes = await fetch('/api/articles/' + encodeURIComponent(cleanSlug));
+    if (apiRes.ok) {
+      const serverArticle = await apiRes.json();
+      if (serverArticle && serverArticle.title) {
+        serverArticle.infobox = serverArticle.infobox || { type: serverArticle.article_type || 'Článek', data: [] };
+        return serverArticle;
+      }
+    }
+  } catch (err) {
+    // fallback
+  }
+
+  const articles = getLocalStore().getArticles();
+  const localArt = articles.find(a => a.slug === cleanSlug) || null;
+  if (localArt && !allowNonPublished && localArt.status !== 'published') {
+    return null;
+  }
+  return localArt;
+}
+
 export async function getCategories() {
   if (!isDemoMode && supabase) {
     const { data, error } = await supabase

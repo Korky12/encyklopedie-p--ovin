@@ -285,6 +285,67 @@ export async function writeMarkdownArticle(slug, metadata, content, commitMessag
   throw new Error('GitHub synchronizace není nakonfigurována (chybí GITHUB_TOKEN, GITHUB_OWNER nebo GITHUB_REPO).');
 }
 
+
+export async function deleteMarkdownArticle(slug, commitMessage, authorInfo, customConfig = CONFIG) {
+  const cfg = customConfig || CONFIG;
+  const filePath = `${cfg.articlesDir}/${slug}.md`;
+
+  if (cfg.githubToken && cfg.githubOwner && cfg.githubRepo) {
+    let existingSha = null;
+    try {
+      const checkRes = await fetch(`https://api.github.com/repos/${cfg.githubOwner}/${cfg.githubRepo}/contents/${filePath}?ref=${cfg.githubBranch}`, {
+        headers: {
+          Authorization: `Bearer ${cfg.githubToken}`,
+          Accept: 'application/vnd.github.v3+json',
+          'User-Agent': 'Encyklopedie-Picovin'
+        }
+      });
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        existingSha = checkData.sha;
+      }
+    } catch {
+      // not found
+    }
+
+    if (!existingSha) {
+      return { success: true, slug, deleted: false, message: 'Soubor na GitHubu neexistuje' };
+    }
+
+    const bodyPayload = {
+      message: commitMessage || `Smazání článku ${slug}`,
+      sha: existingSha,
+      branch: cfg.githubBranch,
+      committer: {
+        name: authorInfo?.display_name || 'Encyklopedie Admin',
+        email: authorInfo?.email || 'admin@encyklopedie.local'
+      }
+    };
+
+    const delRes = await fetch(`https://api.github.com/repos/${cfg.githubOwner}/${cfg.githubRepo}/contents/${filePath}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${cfg.githubToken}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'Encyklopedie-Picovin'
+      },
+      body: JSON.stringify(bodyPayload)
+    });
+
+    if (!delRes.ok) {
+      const errText = await delRes.text();
+      const error = new Error(`Chyba při mazání na GitHubu (${delRes.status}): ${errText}`);
+      error.statusCode = delRes.status;
+      throw error;
+    }
+
+    return { success: true, slug, deleted: true };
+  }
+
+  throw new Error('GitHub synchronizace není nakonfigurována (chybí GITHUB_TOKEN, GITHUB_OWNER nebo GITHUB_REPO).');
+}
+
 async function getArticleHistory(slug) {
   const filePath = `${CONFIG.articlesDir}/${slug}.md`;
 
@@ -412,6 +473,23 @@ export const server = http.createServer(async (req, res) => {
         );
 
         return json(res, { success: true, slug, result });
+      }
+
+      // DELETE /api/articles/:slug (smazání článku z GitHubu pro admina)
+      const articleDeleteMatch = pathname.match(/^\/api\/articles\/([^/]+)$/);
+      if (articleDeleteMatch && req.method === 'DELETE') {
+        const user = await verifyUser(req);
+        if (!user || user.role !== 'admin') {
+          return err(res, 'Neautorizováno. Pro smazání článku musíte být administrátor.', 403);
+        }
+
+        const slug = articleDeleteMatch[1];
+        const delResult = await deleteMarkdownArticle(
+          slug,
+          `Smazání článku ${slug}`,
+          user
+        );
+        return json(res, { success: true, slug, result: delResult });
       }
 
       // GET /api/articles/:slug/history
